@@ -1,3 +1,5 @@
-// @pawlr/app-seller: Document-digest seller service sold per tick over Kite x402 (Phase 1b)
-// Placeholder so the workspace builds (Phase 0). No feature code yet.
-export {};
+export { ConfigError, loadConfig, type SellerConfig } from "./config.js";
+export { createPublicApp, httpTickForwarder, SELLER_VERSION, TICK_ROUTE } from "./server.js";
+export { createTickService, INJECTION_TEXT } from "./tickService.js";
+export { FAILURE_MODES, Store, type FailureMode, type TruthEntry } from "./store.js";
+export { CachedSummarizer, ServSummarizer, type Summarizer } from "./summarizer.js";
