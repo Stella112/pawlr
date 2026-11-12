@@ -8,6 +8,8 @@ export interface SellerConfig {
   adminPassword: string;
   /** Public port: free session routes and the paid x402 paywall. */
   port: number;
+  /** Bind address for the public port. 127.0.0.1 when a reverse proxy (Caddy) fronts it. */
+  host: string;
   /** Internal tick service port, bound to 127.0.0.1 only. */
   internalPort: number;
   facilitatorUrl: string;
@@ -72,6 +74,7 @@ export function loadConfig(env: Record<string, string | undefined>): SellerConfi
     pricePerTick,
     adminPassword,
     port,
+    host: get("HOST", "0.0.0.0"),
     internalPort,
     facilitatorUrl: get("FACILITATOR_URL", FACILITATOR_URL),
     dataDir: get("DATA_DIR", "data"),

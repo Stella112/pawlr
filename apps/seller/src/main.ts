@@ -33,7 +33,7 @@ const app = createPublicApp({
   forwardTick: httpTickForwarder(config.internalPort),
 });
 const cfg = config;
-serve({ fetch: app.fetch, port: cfg.port, hostname: "0.0.0.0" }, (info) => {
+serve({ fetch: app.fetch, port: cfg.port, hostname: cfg.host }, (info) => {
   console.log(
     `pawlr-seller on :${info.port} (${cfg.chain.network}, ${cfg.pricePerTick} ${cfg.chain.assetSymbol} per tick to ${cfg.payTo}); tick service on 127.0.0.1:${cfg.internalPort}`,
   );
