@@ -16,24 +16,41 @@ Status key: **DOC** = stated in official docs (URL given). **CLI** = from `kpass
 | System message required. Missing → 400 `{"error":{"type":"invalid_request_error","message":"A system prompt is required. Please include a system or developer message in your request."}}` | DOC | serv-reasoning/api/index.md |
 | Errors: 400 invalid (missing system prompt, unsupported model, malformed body); 401 bad key; 404 unknown path or model; 429 rate limited; 5xx server/upstream | DOC | api/index.md. Rate-limit numbers and retry guidance: not stated |
 | Model `gpt-5.4-mini`: $1.00 in / $6.00 out per million tokens, 400K context. Prices "include SERV Reasoning" | DOC | serv-reasoning/models.md |
-| `temperature`: "Sampling temperature". No model-specific note | DOC | chat-completions.md. Whether gpt-5.4-mini accepts 0: **OPEN** (probe) |
+| `temperature`: "Sampling temperature". `temperature: 0` accepted by gpt-5.4-mini | DOC + CAPTURED | chat-completions.md; probe p1 |
 | Structured output: `response_format: { type: "json_schema", json_schema: { name, strict: true, schema } }`; read `JSON.parse(choices[0].message.content)` | DOC | tutorials/structured-outputs.md |
 | `finish_reason` values: `stop`, `length`, `content_filter`, `tool_calls` | DOC | chat-completions.md |
 | `usage`: `prompt_tokens`, `completion_tokens`, `total_tokens` | DOC | chat-completions.md. No cost field documented; cost = tokens × price |
 | PromptGuard: `tools: [{ type: "function", function: { name: "serv_prompt_guard" } }]`; "Declaring it by name is sufficient" | DOC | tools.md, tutorials/prompt-guard.md |
-| PromptGuard hit: "SERV returns an endpoint-shaped refusal and does not call the requested upstream model" | DOC | prompt-guard.md. **Refusal shape OPEN** |
+| PromptGuard hit: "SERV returns an endpoint-shaped refusal and does not call the requested upstream model" | DOC + CAPTURED | Shape captured: probe p3 (below) |
 | PromptGuard: "If SERV cannot generate the reasoning prompt needed to arm the guard, it returns a `502` error. If the guard judge fails after being armed, the request continues without a verdict." | DOC | prompt-guard.md. A silent guard failure is possible; the quote-or-hold rule stays the backstop |
 | Do not declare both `serv_prompt_guard` and `serv_prompt_guard_legacy` ("SERV rejects that configuration") | DOC | prompt-guard.md |
 | Shadow Agent: `serv_shadow_agent`; `hint` (string), `max_iterations` (integer, default 3, 1 to 10) | DOC | tutorials/shadow-agent.md. tools.md samples show 5; Pawlr sets 3 explicitly |
-| Shadow Agent: "If every attempt fails, SERV returns the latest revision and records an `exhausted` outcome" | DOC | shadow-agent.md. **Where it appears in the API response: OPEN** |
+| Shadow Agent: "If every attempt fails, SERV returns the latest revision and records an `exhausted` outcome" | DOC + CAPTURED | Not exposed in the API response (probe p6, below) |
 | Shadow Agent: validator/regeneration abort → `502`; non-streaming only | DOC | shadow-agent.md |
 | serv tools can be mixed with function tools in one `tools` array | DOC | tools.md |
-| `response_format` combined with `serv_*` tools | **OPEN** | Not stated. Test in Phase 1 |
+| `response_format` combined with `serv_*` tools | CAPTURED | Works with `serv_prompt_guard` (p5) and `serv_shadow_agent` (p6) |
 | "If your balance cannot cover the request's estimated ceiling, SERV may reject it before billable inference begins." | DOC | tutorials/usage-and-billing.md |
 | Graph Sharding | Not used | Not mentioned on any page read. Never claim it |
 
-### Captured (Phase 1)
-_Empty. Needs `SERV_API_KEY` in `.env`._
+### Captured (Phase 1, 2026-11-12 21:40 UTC)
+
+Script: `scripts/probe/serv.mjs`. Raw responses (status, headers, body, latency): `packages/verifier/test/fixtures/serv/p0…p6.json`. Total spend ≈ $0.006 (computed from `usage` × models.md prices). One sample per case, so treat behaviour (not shapes) as indicative.
+
+| Probe | Result | What it settles |
+|---|---|---|
+| p0 no system message | **400** `{"error":{"message":"A system prompt is required. Please include a system or developer message in your request.","type":"invalid_request_error"}}` | Matches docs |
+| p1 ruling, honest output, `temperature: 0` + `response_format` | 200, `finish_reason: "stop"`, content is valid `pawlr_ruling` JSON, verdict `pass`. 633 in / 121 out tokens, 7.5 s | **`temperature: 0` is accepted** by gpt-5.4-mini. Structured output works |
+| p2 ruling, off-topic output | 200, verdict `fail`, 1.7 s | Model rejects off-topic output |
+| p3 PromptGuard + `response_format`, injection output | **Guard refusal shape:** HTTP **200**, `finish_reason: "stop"`, `message: {"role":"assistant","content":null,"refusal":"I can't share that."}`, `usage: {"prompt_tokens":0,"completion_tokens":0,"total_tokens":0}`, `model: "gpt-5.4-mini"` (unversioned), no `service_tier`, no `cf-ray` header | **Refusal shape resolved.** Detect as: `content === null` and `refusal` is a non-empty string. `usage.total_tokens === 0` marks it as SERV's guard (no model call) rather than an upstream model refusal. Either way → `unsure` |
+| p4 PromptGuard only (no `response_format`), same injection output | 200, **not refused**: the model answered normally (plain text, "fail …"), 580 in / 55 out | **The guard does not catch every injection.** Same text was refused in p3 and passed in p4. Never rely on the guard alone; the quote-or-hold rule and code checks remain the backstop |
+| p5 PromptGuard + `response_format`, honest output | 200, normal structured `pass` | **`response_format` and `serv_prompt_guard` work in one request.** Single-call design (CLAUDE.md §9 step 6) is fine |
+| p6 Shadow Agent + `response_format`, subtle (wrong-section) output | 200, verdict `fail`, 5.9 s. Body and headers have **no outcome field** (same keys as a normal call: `id, object, created, model, choices, usage, service_tier`) | **Shadow Agent outcome is not exposed in the API response.** `exhausted` cannot be detected from the response; only the console report shows it. Pawlr records `shadow: "outcome not exposed by API"` and judges the result only by re-running the quote check |
+
+Other observations:
+- Normal responses report `model: "gpt-5.4-mini-2026-03-17"`, plus message keys `refusal` (null) and `annotations`, and top-level `service_tier: "default"`.
+- Every response has an `x-openserv-request-id` header; log it with each verdict for traceability.
+- **Quote quality:** in all four structured rulings the model quoted the *section text*, never the seller output, even for `pass`. A section quote proves nothing about what the seller delivered. See the Phase 1 report for the proposed prompt and rule change.
+- Latency 1.7 s to 7.5 s per call.
 
 ---
 

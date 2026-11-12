@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-11-12T21:40:03.879Z",
+  "source": "live SERV call, scripts/probe/serv.mjs",
+  "purpose": "missing system message",
+  "request": {
+    "model": "gpt-5.4-mini",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Say hello."
+      }
+    ]
+  },
+  "response": {
+    "status": 400,
+    "latencyMs": 1245,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=2592000",
+      "content-length": "145",
+      "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+      "content-type": "application/json; charset=utf-8",
+      "cross-origin-opener-policy": "same-origin",
+      "cross-origin-resource-policy": "same-origin",
+      "date": "Thu, 12 Nov 2026 21:40:04 GMT",
+      "etag": "W/\"91-ByiKpNiOhKQhb+fj/OZd4jGcv7Q\"",
+      "origin-agent-cluster": "?1",
+      "referrer-policy": "no-referrer",
+      "server": "Google Frontend",
+      "strict-transport-security": "max-age=31536000; includeSubDomains",
+      "via": "1.1 google",
+      "x-cloud-trace-context": "a9106582be018af993c2233720bd3006",
+      "x-content-type-options": "nosniff",
+      "x-dns-prefetch-control": "off",
+      "x-download-options": "noopen",
+      "x-frame-options": "SAMEORIGIN",
+      "x-openserv-request-id": "315ccf5f-b56d-452b-b8f7-93357e3a9ba2",
+      "x-permitted-cross-domain-policies": "none",
+      "x-xss-protection": "0"
+    },
+    "body": {
+      "error": {
+        "message": "A system prompt is required. Please include a system or developer message in your request.",
+        "type": "invalid_request_error"
+      }
+    }
+  }
+}
