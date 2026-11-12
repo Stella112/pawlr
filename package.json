@@ -1,0 +1,22 @@
+{
+  "name": "pawlr",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pawlr: the catch that stops paying the moment delivery fails.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

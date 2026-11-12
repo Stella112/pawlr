@@ -1,0 +1,105 @@
+# Integration notes
+
+Verified facts with sources. Docs were read on 2026-11-12 (Phase 0) through a fetch tool that summarises pages, so doc quotes are close to verbatim but not guaranteed character-exact. CLI help and template source below were read directly and are exact.
+
+Status key: **DOC** = stated in official docs (URL given). **CLI** = from `kpass --help` output run in this session. **SRC** = from source code read in this session. **CAPTURED** = seen in a live response. **OPEN** = not yet verified; no code may depend on it.
+
+---
+
+## 1. SERV Reasoning (OpenServ)
+
+| Item | Status | Evidence |
+|---|---|---|
+| Endpoint `POST https://inference-api.openserv.ai/v1/chat/completions` | DOC | docs.openserv.ai/serv-reasoning/api/chat-completions.md |
+| OpenAI SDK `baseURL: "https://inference-api.openserv.ai/v1"` | DOC | chat-completions.md |
+| Auth `Authorization: Bearer $SERV_API_KEY` | DOC | chat-completions.md |
+| System message required. Missing → 400 `{"error":{"type":"invalid_request_error","message":"A system prompt is required. Please include a system or developer message in your request."}}` | DOC | serv-reasoning/api/index.md |
+| Errors: 400 invalid (missing system prompt, unsupported model, malformed body); 401 bad key; 404 unknown path or model; 429 rate limited; 5xx server/upstream | DOC | api/index.md. Rate-limit numbers and retry guidance: not stated |
+| Model `gpt-5.4-mini`: $1.00 in / $6.00 out per million tokens, 400K context. Prices "include SERV Reasoning" | DOC | serv-reasoning/models.md |
+| `temperature`: "Sampling temperature". No model-specific note | DOC | chat-completions.md. Whether gpt-5.4-mini accepts 0: **OPEN** (probe) |
+| Structured output: `response_format: { type: "json_schema", json_schema: { name, strict: true, schema } }`; read `JSON.parse(choices[0].message.content)` | DOC | tutorials/structured-outputs.md |
+| `finish_reason` values: `stop`, `length`, `content_filter`, `tool_calls` | DOC | chat-completions.md |
+| `usage`: `prompt_tokens`, `completion_tokens`, `total_tokens` | DOC | chat-completions.md. No cost field documented; cost = tokens × price |
+| PromptGuard: `tools: [{ type: "function", function: { name: "serv_prompt_guard" } }]`; "Declaring it by name is sufficient" | DOC | tools.md, tutorials/prompt-guard.md |
+| PromptGuard hit: "SERV returns an endpoint-shaped refusal and does not call the requested upstream model" | DOC | prompt-guard.md. **Refusal shape OPEN** |
+| PromptGuard: "If SERV cannot generate the reasoning prompt needed to arm the guard, it returns a `502` error. If the guard judge fails after being armed, the request continues without a verdict." | DOC | prompt-guard.md. A silent guard failure is possible; the quote-or-hold rule stays the backstop |
+| Do not declare both `serv_prompt_guard` and `serv_prompt_guard_legacy` ("SERV rejects that configuration") | DOC | prompt-guard.md |
+| Shadow Agent: `serv_shadow_agent`; `hint` (string), `max_iterations` (integer, default 3, 1 to 10) | DOC | tutorials/shadow-agent.md. tools.md samples show 5; Pawlr sets 3 explicitly |
+| Shadow Agent: "If every attempt fails, SERV returns the latest revision and records an `exhausted` outcome" | DOC | shadow-agent.md. **Where it appears in the API response: OPEN** |
+| Shadow Agent: validator/regeneration abort → `502`; non-streaming only | DOC | shadow-agent.md |
+| serv tools can be mixed with function tools in one `tools` array | DOC | tools.md |
+| `response_format` combined with `serv_*` tools | **OPEN** | Not stated. Test in Phase 1 |
+| "If your balance cannot cover the request's estimated ceiling, SERV may reject it before billable inference begins." | DOC | tutorials/usage-and-billing.md |
+| Graph Sharding | Not used | Not mentioned on any page read. Never claim it |
+
+### Captured (Phase 1)
+_Empty. Needs `SERV_API_KEY` in `.env`._
+
+---
+
+## 2. Kite x402 seller (paywall)
+
+Source used: **Kite's official template** https://github.com/gokite-ai/kite-x402-services, `templates/typescript-express` (Apache-2.0), commit `893a27509648b660bbba626b0da59619a94f04ab` (2026-09-11). Read in full: `src/kite.ts`, `src/index.ts`, `README.md`. The community template `kite-x402-hono` was not found in the gokite-ai org and was not used.
+
+| Item | Status | Evidence |
+|---|---|---|
+| Packages: `@x402/core`, `@x402/evm`, `@x402/express` (template pins `^2.25.0`) | SRC | template package.json |
+| `@x402/hono` exists on npm, 2.30.0 (same line as `@x402/express` 2.30.0) | CLI | `npm view @x402/hono version` → `2.30.0`. Its API must be read from `node_modules` before use (Phase 1b) |
+| Server wiring: `new HTTPFacilitatorClient({ url })` from `@x402/core/server`; `new x402ResourceServer(facilitator).register(chain.network, new ExactEvmScheme().registerMoneyParser(kiteMoneyParser(chain)))`; `ExactEvmScheme` from `@x402/evm/exact/server`; `paymentMiddleware(routes, resourceServer)` | SRC | template src/index.ts |
+| Route config: `accepts: { scheme: "exact", price, network: chain.network, payTo, maxTimeoutSeconds: 60 }`, plus `description`, `mimeType` | SRC | src/index.ts |
+| Facilitator: `https://facilitator.pieverse.io/v2` ("The x402 SDK appends /verify, /settle and /supported, so keep the /v2 prefix.") | SRC | src/kite.ts |
+| Settle timing: verified first, handler runs, and "the payment is settled only if the upstream answered with a non-error status" (`// 502 is >= 400, so the payment middleware does not settle the charge.`) | SRC | src/index.ts. So a seller error status (≥ 400) does not charge |
+| Payment header from buyer: `PAYMENT-SIGNATURE` | SRC | src/index.ts strips `payment-signature` before proxying |
+| 402 body travels base64 in a `PAYMENT-REQUIRED` header; example decodes to `{"x402Version": 2, "accepts": [{"scheme": "exact", "network": "eip155:2366", "asset": "0x7aB6…149e", "amount": "1000", "payTo": "…", "maxTimeoutSeconds": 60, "extra": {"name": "Bridged USDC (Kite AI)", "version": "2"}}]}` | SRC (README) | Confirm with a live 402 in Phase 1b |
+| Tx hash returned to the payer in a `PAYMENT-RESPONSE` header | SRC (README diagram only) | **OPEN** until captured live |
+| Mainnet: `eip155:2366`, RPC `https://rpc.gokite.ai`, USDC.e `0x7aB6f3ed87C42eF0aDb67Ed95090f8bF5240149e`, 6 decimals, EIP-712 name "Bridged USDC (Kite AI)", version "2" | SRC + DOC | src/kite.ts; address and decimals also in docs smart-contracts-list |
+| Testnet: `eip155:2368`, RPC `https://rpc-testnet.gokite.ai`, pieUSD `0x38129cf4CE5E183eFF248F42A7D345Bb1B47621A`, 18 decimals, EIP-712 name "pieUSD", version "1" ("Kite Passport sandbox agents pay with this.") | SRC | src/kite.ts |
+| Price → units: decimal string × 10^decimals with BigInt (no float) | SRC | `kiteMoneyParser` in src/kite.ts |
+| Template env vars: `PAY_TO`, `KITE_NETWORK` (mainnet/testnet), `PRICE_USD`, `FACILITATOR_URL`, `PORT`, `UPSTREAM_URL`, … | SRC | Pawlr uses the spec names `SELLER_PAY_TO`, `PRICE_PER_TICK`; mapping is 1:1 |
+| **Docs conflict:** docs.gokite.ai/passport/seller shows x402 v1 (`"scheme": "gokite-aa"`, `maxAmountRequired`, `X-PAYMENT` header). The official template uses v2 (`exact`, `amount`, `PAYMENT-SIGNATURE`) | DOC vs SRC | Pawlr follows the template (newer code, in Kite's own org). Confirm in Phase 1b that Passport pays it |
+| Explorers: mainnet https://kitescan.ai/, testnet https://testnet.kitescan.ai/ | DOC | kite-chain/1-getting-started/tools. Tx path (`/tx/<hash>`) **OPEN**: check on the site |
+| Faucet (web): https://faucet.gokite.ai | DOC | network-information |
+
+---
+
+## 3. Kite Passport (buyer payments): `kpass` CLI
+
+Installed 2026-11-12 with Kite's Windows installer (`https://cli.gokite.ai/install.ps1`, linked from `install.sh`, which tells Windows users to use it). Bundle 111: kpass 6.13.2, ksearch 6.13.2, skills 3.6.8, in `C:\Users\Admin\.kpass\bin`. The installer's final step (global `kpass skills setup` into AI-agent configs) was left out on purpose; run `kpass skills setup` later if wanted. Everything below is from `--help` output of 6.13.2 unless marked.
+
+| Item | Status | Evidence |
+|---|---|---|
+| Global flags: `--output json`, `--no-interactive` ("Never prompt for input; fail if required flag missing"), `--base-url` (default `https://passport.prod.gokite.ai`) | CLI | `kpass --help` |
+| Exit codes: 0 success or human action required; 1 network/general; 2 usage; 3 auth; 4 not found; 5 rate limited | CLI | `kpass --help`. Note: 0 can also mean "human action required"; Pawlr must read `status` in the JSON, not just the exit code |
+| Sandbox: `kpass sandbox on` / `off` / `status`. "Sandbox is a Stripe-style test mode. When on, supported commands run against the Kite testnet with faucet (fake) money and isolated data; login is shared with live. The mode is sticky (persisted)" | CLI | `kpass sandbox --help` |
+| Login: `kpass login init --email <email>` then `kpass login verify --login-id <id> --code <code>`; signup: `signup init` / `signup poll` / `signup exchange` | CLI | `kpass --help`. Maris does this herself |
+| **Current session commands are `kpass session …`**. `agent:session` / `agent session` print "Legacy session commands (moved to root)" | CLI | `kpass agent:session --help`, `kpass agent session --help` |
+| Create a passkey-approved session: `kpass session create --separate --task-summary <s> --max-amount-per-tx <n> --max-total-amount <n> --assets <SYMBOLS> --ttl <1h> [--no-browser] [--no-reuse] [--preview]` | CLI | `kpass session create --help`. `--payment-approach` (in older docs) does not exist in 6.13.2 |
+| `--delegation <json>`: "Full delegation JSON object (takes precedence over individual flags)" | CLI | Shape **OPEN**. Possibly where endpoint `execution_constraints` go (docs error-codes page names them) |
+| Without `--separate`, `session create` pays "from the account allowance (no approval)"; docs say allowance is live mode only | CLI + DOC | Pawlr uses `--separate` so every session has its own caps and a passkey approval |
+| Approval: `kpass session status --request-id <id> --wait [--poll-interval <s>] [--timeout <s>]` | CLI | `kpass session status --help` |
+| Pay one call: `kpass session execute --url <url> --idempotency-key <key> [--method POST] [--headers <json>] [--body <json>] [--session-id <id>] [--output-file <path>]` | CLI | `kpass session execute --help`. `--idempotency-key`: "Stable operation key; reuse with identical input when retrying a recurring payment". Default method is POST |
+| Execute JSON output includes `x402.response_body_base64` (for binary responses) | CLI | `--output-file` help text. Full output shape **OPEN** (capture live) |
+| Held payments: `kpass session updates --payment-id <id> --wait [--timeout <dur>]` ("Wait for the confirmed result of a held payment") | CLI | `kpass session updates --help` |
+| List/select: `kpass session list [--status active\|expired] [--local]`, `kpass session use --session-id <id>`, `kpass user sessions …` | CLI | help output |
+| Agent identity: `kpass agent register --type <type>` (Kite template README uses `--type service-tester`) | CLI + SRC | `kpass agent:register --help` |
+| Test tokens: `kpass faucet drop --recipient <address> --token <symbol>` (help says "requires login"; README uses `--token pieUSD`) | CLI + SRC | `kpass faucet drop --help`; template README |
+| Wallet: `kpass wallet balance`, `kpass wallet address [--chain …]` | CLI | `kpass --help`. The `--chain` list does not include kite; check what `wallet address` prints with no flag |
+| No public HTTP API for Passport: "there is no public HTTP API reference yet" | DOC | docs.gokite.ai/api-reference. So the buyer pays each tick by running `kpass session execute … --no-interactive --output json` as a child process |
+| Session error codes: `session_rule_exceeded`, `session_total_exceeded`, `session_endpoint_forbidden`, `session_asset_forbidden`, `session_forbidden`, `session_owner_forbidden`, `payment_target_forbidden`, `payment_redirect_not_allowed`, `session_request_forbidden` | DOC | docs.gokite.ai/reference/error-codes |
+| Can the payee be pinned? | **OPEN** | `execution_constraints` exist (error-codes page) but no flag sets them; maybe via `--delegation`. Until shown, Pawlr checks payee/network/amount itself |
+| Can the buyer see the 402 challenge before paying? | **OPEN, important** | `execute` pays in one step. To check payee and amount (CLAUDE.md 10.1) the buyer can first make a plain unpaid request to the same URL and read the `PAYMENT-REQUIRED` header, then call `execute` only if it matches. A seller could in theory change the challenge between the two calls; the Passport per-tx cap still bounds that |
+| Where the tx hash appears for the payer | **OPEN** | Template README: `execute` "prints HTTP 200, the upstream body and the settlement transaction hash". Field name: capture live |
+| Current state on this machine: backend reachable (`https://passport.prod.gokite.ai`, status ok), **not logged in**, no agent registered, no session | CAPTURED | `kpass status --output json`, 2026-11-12 |
+
+### Captured (Phase 1b)
+_Empty. Needs Maris to log in, turn sandbox on, register an agent, fund with faucet pieUSD, and approve a session._
+
+---
+
+## 4. Dolphin
+
+**OPEN.** Base URL, auth, request format and model ID needed from Maris.
+
+## 5. Reppo
+
+**OPEN.** Base URL, auth, request/response schema and case submission needed from Maris.

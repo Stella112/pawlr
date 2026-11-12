@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
+# Secrets: never commit. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
+
+# Runtime data: sessions, ticks, ledgers, truth logs, costs, bench output.
+data/
+
+# Kite Passport CLI local state (session keys, runtime key).
+.kite-passport/
+
+.DS_Store
+Thumbs.db
