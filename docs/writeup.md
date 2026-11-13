@@ -1,7 +1,7 @@
 # Pawlr: write-up (OpenServ SERV Hackathon Edition 02)
 
 **Track:** Kite
-**Live:** https://pawlr.vercel.app (seller) · https://pawlr.vercel.app/console (console)
+**Live:** https://pawlr.vercel.app (landing page) · https://pawlr.vercel.app/dashboard (dashboard)
 **Code:** https://github.com/Stella112/pawlr
 
 ## What it does

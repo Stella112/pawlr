@@ -5,7 +5,8 @@
 Pawlr pays a service one tick at a time, checks each delivery against conditions both sides agreed, and stops paying the moment delivery fails. **The most you can lose is one tick.**
 
 - Live seller: **https://pawlr.vercel.app** (Kite testnet, `eip155:2368`)
-- Live console: **https://pawlr.vercel.app/console** (run a session, stage a failure, see the receipt, send a Recover claim)
+- Dashboard: **https://pawlr.vercel.app/dashboard** (run a session, make the seller misbehave, see the receipt, request a refund)
+- Landing page: **https://pawlr.vercel.app** (what Pawlr is, in plain language)
 - Built for the OpenServ SERV Hackathon Edition 02, **Kite track**. Judging: **SERV Reasoning**.
 
 Every tick is a **real x402 payment settled on-chain on Kite testnet**, with a transaction you can open on [testnet.kitescan.ai](https://testnet.kitescan.ai). Failures in the demo are staged with the seller's failure switch and labelled as such.
@@ -91,7 +92,7 @@ SERV cost per ruling ≈ **$0.001** (from `usage` × model price).
 | Verifier: code checks, SERV structured ruling, PromptGuard, quote-or-hold | **Live** | runs above; fixtures captured from live SERV |
 | Shadow Agent on unclear rulings | **Live code, not triggered live** | SERV never answered "unsure" in our runs; path tested by replaying real responses. SERV does not expose the Shadow Agent outcome in its API |
 | Buyer loop: payee/amount checks, spend caps, ledger (no double pay), receipt | **Live** | runs above; tests |
-| Console: conditions + hash, live meter, PAUSED / IN REVIEW, receipt download | **Live** | https://pawlr.vercel.app/console |
+| Console: conditions + hash, live meter, PAUSED / IN REVIEW, receipt download | **Live** | https://pawlr.vercel.app/dashboard |
 | Recover: SERV drafts the claim, code re-checks, sent to the seller's refund inbox | **Live** | console step 5. Money is not returned automatically |
 | Human review of unclear ticks (approve / reject, admin password) | **Live code, not triggered live** | SERV gave no "unsure" in our runs |
 | Kite Passport payments (`kpass session execute`) | **Built, blocked by Kite** | session approved with a passkey; payment refused: `host_not_in_executable_catalog` |
