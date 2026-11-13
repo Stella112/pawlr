@@ -11,22 +11,27 @@ import { checkQuote } from "./text.js";
  * stops the NEXT payment; it does not undo the one already made.
  */
 
-/** Optional first-pass screen (Dolphin). Same ruling shape as SERV. Not implemented until its API is verified. */
+/** Optional first-pass screen (Dolphin, see dolphin.ts). Same ruling shape as SERV. */
 export type ScreenClient = (input: { conditions: DeliveryConditions; sectionName: string; sectionText: string; sellerOutput: string }) => Promise<{
   parsed: Parsed;
   usd?: number;
   latencyMs: number;
+  model?: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  status?: number | null;
 }>;
 
 export interface CostEntry {
   at: string;
-  provider: "serv" | "dolphin";
-  purpose: "ruling" | "shadow" | "screen";
+  provider: "serv" | "dolphin" | "reppo";
+  purpose: "ruling" | "shadow" | "screen" | "dispute" | "claim";
   model: string;
   latencyMs: number;
   promptTokens?: number;
   completionTokens?: number;
   usd: number | null;
+  credits?: number;
   status: number | null;
   requestId?: string;
 }
@@ -93,9 +98,20 @@ export async function verifyTick(input: VerifyInput, deps: VerifierDeps): Promis
   // 5. Optional Dolphin screen.
   let screenPassed = false;
   if (deps.screen) {
-    const s = await deps.screen(judgeInput).catch((err) => ({ parsed: { kind: "error", status: null, retryable: false, detail: String(err) } as Parsed, usd: 0, latencyMs: 0 }));
+    type ScreenOut = Awaited<ReturnType<ScreenClient>>;
+    const s: ScreenOut = await deps.screen(judgeInput).catch((err): ScreenOut => ({ parsed: { kind: "error", status: null, retryable: false, detail: String(err) }, usd: 0, latencyMs: 0 }));
     if (s.usd !== undefined) cost.dolphinUsd = (cost.dolphinUsd ?? 0) + s.usd;
-    deps.onCost?.({ at: new Date(now()).toISOString(), provider: "dolphin", purpose: "screen", model: "dolphin", latencyMs: s.latencyMs, usd: s.usd ?? null, status: null });
+    deps.onCost?.({
+      at: new Date(now()).toISOString(),
+      provider: "dolphin",
+      purpose: "screen",
+      model: s.model ?? "dolphin",
+      latencyMs: s.latencyMs,
+      promptTokens: s.promptTokens,
+      completionTokens: s.completionTokens,
+      usd: s.usd ?? null,
+      status: s.status ?? null,
+    });
     if (s.parsed.kind === "ruling") {
       const q = checkQuote(s.parsed.quote, ev.output, sectionText);
       screenPassed = s.parsed.verdict === "pass" && q.ok;

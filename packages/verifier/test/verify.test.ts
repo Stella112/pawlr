@@ -209,7 +209,7 @@ describe("judge errors: never pass on error", () => {
   });
 });
 
-describe("Dolphin screen slot (TEST DOUBLE: the Dolphin client is not built until its API is verified)", () => {
+describe("Dolphin screen in the pipeline (TEST DOUBLE screen; the real client is tested in partners.test.ts)", () => {
   const c: Captured = load("captured/honest.json");
   const ruling = JSON.parse((c.recorded[0]!.response.body as any).choices[0].message.content);
   const screenPass: ScreenClient = async () => ({ parsed: { kind: "ruling", ...ruling }, usd: 0.00001, latencyMs: 3 });

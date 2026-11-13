@@ -1,0 +1,53 @@
+{
+  "capturedAt": "2026-11-13T23:15:18.568Z",
+  "source": "live Dolphin call, scripts/probe/dolphin.mjs",
+  "purpose": "GET /models",
+  "request": {
+    "method": "GET",
+    "path": "/models"
+  },
+  "status": 200,
+  "headers": {
+    "alt-svc": "h3=\":443\"; ma=86400",
+    "cf-cache-status": "DYNAMIC",
+    "cf-ray": "a5a17a71799edcee-LAX",
+    "content-encoding": "br",
+    "content-type": "application/json",
+    "date": "Fri, 13 Nov 2026 23:15:25 GMT",
+    "nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "report-to": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=zF0hB9lPoy1MgzfHBQQc6K4oWMYbYTy2vtvbMrBxBOJ31UKRXkib5GTdCs7JzXBXEG7b0jXLs2ZJANTrPwTS4tYispZO7ASwNE2kMM1A79eg%2F4llVrp4NsJNPG62NXJ4bi29%2FA%3D%3D\"}]}",
+    "server": "cloudflare",
+    "strict-transport-security": "max-age=31536000; includeSubdomains",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "x-request-id": "fde6a6f9-f514-4bcf-9086-a4dad382286a"
+  },
+  "latencyMs": 8374,
+  "body": {
+    "object": "list",
+    "data": [
+      {
+        "id": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "object": "model",
+        "created": 0,
+        "owned_by": "dolphinpod",
+        "context_length": 1048576
+      },
+      {
+        "id": "nvidia/Gemma-4-26B-A4B-NVFP4",
+        "object": "model",
+        "created": 0,
+        "owned_by": "dolphinpod",
+        "context_length": 262144
+      },
+      {
+        "id": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+        "object": "model",
+        "created": 0,
+        "owned_by": "dolphinpod",
+        "context_length": 32768
+      }
+    ]
+  }
+}

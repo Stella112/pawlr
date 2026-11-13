@@ -93,6 +93,7 @@ export const TickVerdict = z.object({
     relevance: Check.optional(),
     quote: Check.optional(),
     shadow: Check.optional(),
+    dispute: Check.optional(),
   }),
   quote: z.string().nullable(),
   reason: z.string(),
