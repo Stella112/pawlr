@@ -1,12 +1,10 @@
 // Entry point: node --env-file=.env apps/seller/dist/main.js
 import { serve } from "@hono/node-server";
+import { Hono } from "hono";
 import { HTTPFacilitatorClient } from "@x402/core/server";
-import { ConfigError, loadConfig } from "./config.js";
-import { createPublicApp, httpTickForwarder } from "./server.js";
-import { Store } from "./store.js";
-import { CachedSummarizer, ServSummarizer } from "./summarizer.js";
-import { createTickService } from "./tickService.js";
-import { createSelfFacilitator } from "./selfFacilitator.js";
+import { CachedSummarizer, ConfigError, Store, createPublicApp, createSelfFacilitator, createTickService, httpTickForwarder, loadConfig } from "@pawlr/seller";
+import { landingPage } from "./landing.js";
+import { ServSummarizer } from "./summarizer.js";
 
 let config;
 try {
@@ -37,8 +35,12 @@ const app = createPublicApp({
       : new HTTPFacilitatorClient({ url: config.facilitatorUrl }),
   forwardTick: httpTickForwarder(config.internalPort),
 });
+// The demo's landing page sits in front of the SDK's routes.
+const site = new Hono();
+site.get("/", (c) => c.html(landingPage()));
+site.route("/", app);
 const cfg = config;
-serve({ fetch: app.fetch, port: cfg.port, hostname: cfg.host }, (info) => {
+serve({ fetch: site.fetch, port: cfg.port, hostname: cfg.host }, (info) => {
   console.log(
     `pawlr-seller on :${info.port} (${cfg.chain.network}, settlement ${cfg.settlementMode === "self" ? "self-facilitated (on-chain)" : "Pieverse facilitator (on-chain)"}, ${cfg.pricePerTick} ${cfg.chain.assetSymbol} per tick to ${cfg.payTo}); tick service on 127.0.0.1:${cfg.internalPort}`,
   );

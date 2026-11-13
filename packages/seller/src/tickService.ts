@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { sha256Hex, type TickEvidence } from "@pawlr/protocol";
 import type { FailureMode, Store } from "./store.js";
-import type { Summarizer } from "./summarizer.js";
+import type { Summarizer } from "./summary.js";
+import { createTickEvidence } from "./evidence.js";
 
 /**
  * Internal tick service. It is bound to 127.0.0.1 only and is reached only
@@ -77,16 +78,7 @@ export function createTickService(opts: { store: Store; summarizer: Summarizer; 
       const mode = sw && tick >= sw.fromTick ? sw.mode : null;
       const g = await generate(mode, session.sections, idx, session.conditions.presence.maxAgeSeconds);
 
-      const evidence: TickEvidence = {
-        sessionId,
-        tick,
-        timestamp: new Date(g.timestampMs).toISOString(),
-        sectionName: section.name,
-        sourceHash: session.conditions.document.sections[idx]!.sourceHash,
-        outputHash: sha256Hex(g.output),
-        conditionsHash: session.conditionsHash,
-        output: g.output,
-      };
+      const evidence: TickEvidence = createTickEvidence({ session, tick, sectionIndex: idx, output: g.output, timestampMs: g.timestampMs });
       store.appendTruth(sessionId, {
         tick,
         at: new Date(now()).toISOString(),

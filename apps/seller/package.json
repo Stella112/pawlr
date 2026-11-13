@@ -25,6 +25,7 @@
     "hono": "^4.13.18",
     "openai": "^7.56.0",
     "viem": "2.57.19",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@pawlr/seller": "workspace:*"
   }
 }

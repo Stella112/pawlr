@@ -31,5 +31,8 @@ Live seller and console on public https; real on-chain testnet payments; one-cli
 ## Revenue potential
 A small fee per verified tick, charged to buyers who want the guarantee and sellers who want the trust badge, plus an open protocol and SDK that any x402 service can add, so every verified tick across the ecosystem can run through Pawlr.
 
+## Proof
+Benchmark from real testnet runs (docs/benchmark.md): every staged failure caught at the first bad tick, exactly one bad tick paid per scenario, 0 false accepts and 0 false rejects with code + SERV; code alone would have paid the hidden-instruction tick that SERV caught.
+
 ## Not built (stated plainly)
-Dolphin screening and Reppo disputes (API details were not available in time), the benchmark, and the SDK packages and examples. Kite Passport payments are built but blocked by Kite's catalog allowlist.
+Dolphin screening and Reppo disputes (API details were not available in time). Kite Passport payments are built but blocked by Kite's catalog allowlist. The SDK packages are consumed from the repo, not published to npm.

@@ -1,11 +1,5 @@
 import OpenAI from "openai";
-import { sha256Hex } from "@pawlr/protocol";
-import type { Store } from "./store.js";
-
-/** Produces a 1 to 3 sentence summary of one document section. */
-export interface Summarizer {
-  summarize(sectionName: string, text: string): Promise<string>;
-}
+import type { Store, Summarizer } from "@pawlr/seller";
 
 // SERV Reasoning, OpenAI-compatible (docs.openserv.ai/serv-reasoning/api/chat-completions.md).
 const SERV_BASE_URL = "https://inference-api.openserv.ai/v1";
@@ -51,16 +45,3 @@ export class ServSummarizer implements Summarizer {
   }
 }
 
-/** Caches summaries by section hash so a re-run never pays SERV twice for the same section. */
-export class CachedSummarizer implements Summarizer {
-  constructor(private inner: Summarizer, private store: Store, private model: string) {}
-
-  async summarize(sectionName: string, text: string): Promise<string> {
-    const key = sha256Hex(text);
-    const hit = this.store.getCachedSummary(key);
-    if (hit) return hit.summary;
-    const summary = await this.inner.summarize(sectionName, text);
-    this.store.putCachedSummary(key, { summary, model: this.model, createdAt: new Date().toISOString() });
-    return summary;
-  }
-}

@@ -2,13 +2,27 @@
   "name": "@pawlr/seller",
   "version": "0.0.0",
   "private": true,
-  "description": "Seller middleware: TickEvidence per tick, conditions hash, evidence and refund routes",
+  "description": "Add Pawlr to an x402 service: agreed conditions, TickEvidence per tick, evidence and refund routes, Kite x402 paywall",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.13.18",
+    "@x402/hono": "^2.30.0",
+    "@x402/core": "^2.30.0",
+    "@x402/evm": "^2.30.0",
+    "viem": "2.57.19",
+    "zod": "^4.6.7",
+    "@pawlr/protocol": "workspace:*"
   }
 }

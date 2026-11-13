@@ -18,7 +18,17 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6))
 
-  apps/bench: {}
+  apps/bench:
+    dependencies:
+      '@pawlr/buyer':
+        specifier: workspace:*
+        version: link:../../packages/buyer
+      '@pawlr/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@pawlr/verifier':
+        specifier: workspace:*
+        version: link:../../packages/verifier
 
   apps/console:
     dependencies:
@@ -46,6 +56,9 @@ importers:
       '@pawlr/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
+      '@pawlr/seller':
+        specifier: workspace:*
+        version: link:../../packages/seller
       '@x402/core':
         specifier: ^2.30.0
         version: 2.30.0
@@ -68,9 +81,26 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  examples/buyer-minimal: {}
+  examples/buyer-minimal:
+    dependencies:
+      '@pawlr/buyer':
+        specifier: workspace:*
+        version: link:../../packages/buyer
+      '@pawlr/verifier':
+        specifier: workspace:*
+        version: link:../../packages/verifier
 
-  examples/seller-minimal: {}
+  examples/seller-minimal:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.8
+        version: 2.1.8(hono@4.13.18)
+      '@pawlr/seller':
+        specifier: workspace:*
+        version: link:../../packages/seller
+      '@x402/core':
+        specifier: ^2.30.0
+        version: 2.30.0
 
   packages/buyer:
     dependencies:
@@ -102,7 +132,29 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
-  packages/seller: {}
+  packages/seller:
+    dependencies:
+      '@pawlr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@x402/core':
+        specifier: ^2.30.0
+        version: 2.30.0
+      '@x402/evm':
+        specifier: ^2.30.0
+        version: 2.30.0(typescript@7.0.2)
+      '@x402/hono':
+        specifier: ^2.30.0
+        version: 2.30.0(hono@4.13.18)(typescript@7.0.2)
+      hono:
+        specifier: ^4.13.18
+        version: 4.13.18
+      viem:
+        specifier: 2.57.19
+        version: 2.57.19(typescript@7.0.2)(zod@4.6.7)
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/verifier:
     dependencies:

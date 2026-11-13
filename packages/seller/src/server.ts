@@ -15,7 +15,6 @@ import {
 } from "@pawlr/protocol";
 import type { SellerConfig } from "./config.js";
 import { FAILURE_MODES, type FailureMode, type Store } from "./store.js";
-import { landingPage } from "./landing.js";
 
 export const SELLER_VERSION = "0.1.0";
 export const TICK_ROUTE = "GET /tick/:sessionId/:n";
@@ -117,8 +116,6 @@ export function createPublicApp(opts: {
     const given = auth.startsWith("Bearer ") ? auth.slice(7) : "";
     return given.length > 0 && sameSecret(given, config.adminPassword);
   };
-
-  app.get("/", (c) => c.html(landingPage()));
 
   app.get("/health", (c) =>
     c.json({

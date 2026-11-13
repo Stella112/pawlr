@@ -139,12 +139,13 @@ input[type=password]{font:inherit;color:inherit;background:var(--bg);border:1px 
       <input type="range" id="ticks" min="1" max="8" value="5">
     </div>
     <div class="field">
-      <label class="switch"><input type="checkbox" id="failOn"> <span><b>Test Pawlr: make the seller misbehave</b><br><span class="help">A staged failure, so you can watch Pawlr catch it.</span></span></label>
+      <label class="switch"><input type="checkbox" id="failOn"> <span><b>Test Pawlr: make the seller misbehave</b><br><span class="help">A staged failure, so you can watch Pawlr catch it (admin only).</span></span></label>
       <div id="simBox" class="simbox hidden">
         <span class="simtag">SIMULATED FAILURE</span>
         <div class="modes" id="modes"></div>
         <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>Start misbehaving at tick</span><select id="failFrom"></select></div>
         <p class="help" style="margin-top:10px">The seller won't say it's misbehaving. Pawlr has to notice on its own.</p>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><input type="password" id="failPw" placeholder="Admin password" autocomplete="off"><span class="help" style="margin:0">Only the demo admin can make the seller misbehave.</span></div>
       </div>
     </div>
     <div class="actions"><button class="btn" id="draftBtn">Review the agreement →</button><span class="err" id="draftErr"></span></div>
@@ -270,7 +271,7 @@ $("failOn").onchange = () => $("simBox").classList.toggle("hidden", !$("failOn")
 $("draftBtn").onclick = async () => {
   $("draftErr").textContent = "";
   try {
-    draft = await api("/sessions", { markdown: $("doc").value, ticks: Number($("ticks").value), failure: $("failOn").checked ? { mode, fromTick: Number($("failFrom").value) } : null });
+    draft = await api("/sessions", { markdown: $("doc").value, ticks: Number($("ticks").value), failure: $("failOn").checked ? { mode, fromTick: Number($("failFrom").value) } : null, password: $("failPw").value });
     const c = draft.conditions, n = c.maxTicks;
     const rules = [
       ["$", `You pay <b>${c.pricePerTick} ${sym()}</b> per tick, for at most <b>${n} ticks</b> (never more than <b>${c.maxSpend} ${sym()}</b> in total).`],

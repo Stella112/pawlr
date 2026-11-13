@@ -48,8 +48,8 @@ export function createConsoleApp(mgr: SessionManager, info: ConsoleInfo) {
   });
 
   app.post("/api/sessions", async (c) => {
-    const b = await c.req.json<{ markdown?: string; ticks?: number; failure?: { mode: string; fromTick: number } | null }>();
-    const s = await mgr.draft(String(b.markdown ?? ""), Number(b.ticks ?? 5), b.failure ?? null);
+    const b = await c.req.json<{ markdown?: string; ticks?: number; failure?: { mode: string; fromTick: number } | null; password?: string }>();
+    const s = await mgr.draft(String(b.markdown ?? ""), Number(b.ticks ?? 5), b.failure ?? null, String(b.password ?? ""));
     return c.json(view(s), 201);
   });
   app.post("/api/sessions/:id/start", async (c) => c.json(view(await mgr.start(c.req.param("id")))));

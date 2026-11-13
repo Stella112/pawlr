@@ -1,6 +1,4 @@
-export { ConfigError, loadConfig, type SellerConfig } from "./config.js";
-export { createPublicApp, httpTickForwarder, SELLER_VERSION, TICK_ROUTE } from "./server.js";
-export { createTickService, INJECTION_TEXT } from "./tickService.js";
-export { FAILURE_MODES, Store, type FailureMode, type TruthEntry } from "./store.js";
-export { CachedSummarizer, ServSummarizer, type Summarizer } from "./summarizer.js";
-export { createSelfFacilitator } from "./selfFacilitator.js";
+// The demo seller is built on the @pawlr/seller SDK; it adds the SERV summarizer and the landing page.
+export * from "@pawlr/seller";
+export { ServSummarizer, SUMMARY_SYSTEM_PROMPT } from "./summarizer.js";
+export { landingPage } from "./landing.js";
