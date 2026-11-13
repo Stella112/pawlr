@@ -6,7 +6,7 @@ const decimal = z.string().regex(/^\d+(\.\d+)?$/, "decimal string");
 const hex64 = z.string().regex(/^[0-9a-f]{64}$/, "lowercase sha256 hex");
 const evmAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "0x address");
 
-/** CLAUDE.md §7.2 */
+/** agent.md §7.2 */
 export const DeliveryConditions = z.object({
   version: z.literal(PROTOCOL_VERSION),
   sessionId: z.string().min(8).max(100).regex(/^[A-Za-z0-9_-]+$/),
@@ -30,7 +30,7 @@ export const DeliveryConditions = z.object({
 });
 export type DeliveryConditions = z.infer<typeof DeliveryConditions>;
 
-/** CLAUDE.md §7.3. `output` is untrusted text. */
+/** agent.md §7.3. `output` is untrusted text. */
 export const TickEvidence = z.object({
   sessionId: z.string(),
   tick: z.number().int().min(1),
@@ -54,7 +54,7 @@ export const CreateSessionRequest = z.object({
 });
 export type CreateSessionRequest = z.infer<typeof CreateSessionRequest>;
 
-/** Body of POST /sessions/:id/refund-requests (the Recover claim, CLAUDE.md §10.2). */
+/** Body of POST /sessions/:id/refund-requests (the Recover claim, agent.md §10.2). */
 export const RefundClaim = z.object({
   sessionId: z.string(),
   conditionsHash: hex64,
@@ -72,7 +72,7 @@ export const AddedEvidence = z.object({
 });
 export type AddedEvidence = z.infer<typeof AddedEvidence>;
 
-/** CLAUDE.md §7.4. `ok: null` means the stage did not run. */
+/** agent.md §7.4. `ok: null` means the stage did not run. */
 export const Check = z.object({ ok: z.boolean().nullable(), detail: z.string() });
 export type Check = z.infer<typeof Check>;
 
@@ -109,7 +109,7 @@ export const TickVerdict = z.object({
 });
 export type TickVerdict = z.infer<typeof TickVerdict>;
 
-/** CLAUDE.md §7.5 */
+/** agent.md §7.5 */
 export const Receipt = z.object({
   sessionId: z.string(),
   conditionsHash: hex64,

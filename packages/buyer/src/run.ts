@@ -36,7 +36,7 @@ export interface SpendLimits {
 }
 
 /**
- * Buyer spend guards (CLAUDE.md §2.3). Read from config. On mainnet both
+ * Buyer spend guards (agent.md §2.3). Read from config. On mainnet both
  * caps are required and the buyer refuses to start without them.
  */
 export function loadSpendLimits(env: Record<string, string | undefined>, network: "testnet" | "mainnet"): SpendLimits {
@@ -125,7 +125,7 @@ export async function agreeSession(seller: SellerInfo, conditions: DeliveryCondi
 }
 
 /**
- * The tick loop (CLAUDE.md §10.1). Pays tick n only after tick n-1 passed.
+ * The tick loop (agent.md §10.1). Pays tick n only after tick n-1 passed.
  * With standard x402 a tick is paid, then judged: a bad tick is paid once,
  * caught, and stops every later payment. Maximum loss: one tick.
  */

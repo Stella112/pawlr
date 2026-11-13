@@ -31,7 +31,7 @@ export interface TruthEntry {
   evidence: TickEvidence;
 }
 
-/** File-backed store under DATA_DIR. JSON / JSONL only (CLAUDE.md §6.1: no database). */
+/** File-backed store under DATA_DIR. JSON / JSONL only (agent.md §6.1: no database). */
 export class Store {
   constructor(readonly dir: string) {
     mkdirSync(dir, { recursive: true });

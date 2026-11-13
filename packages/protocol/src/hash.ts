@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 /**
- * Canonical JSON (CLAUDE.md §7.1): object keys sorted recursively, no
+ * Canonical JSON (agent.md §7.1): object keys sorted recursively, no
  * whitespace, UTF-8. Arrays keep their order. `undefined` object fields are
  * dropped (as JSON.stringify does), so optional fields that are absent and
  * fields set to undefined hash the same.

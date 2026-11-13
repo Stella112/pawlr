@@ -33,7 +33,7 @@ export async function readChallenge(url: string, conditionsHash: string, fetchIm
 }
 
 /**
- * CLAUDE.md §10.1: before paying, the payee and network must equal the agreed
+ * agent.md §10.1: before paying, the payee and network must equal the agreed
  * conditions, and the amount must be no more than pricePerTick. Kite Passport
  * sessions cannot be pinned to one payee (no such field in the delegation), so
  * this check is Pawlr's.

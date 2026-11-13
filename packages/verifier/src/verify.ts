@@ -4,7 +4,7 @@ import { buildRulingRequest, parseResponse, PROMPT_VERSION, usageOf, type ChatTr
 import { checkQuote } from "./text.js";
 
 /**
- * The verifier pipeline (CLAUDE.md §9). Pure library: every external call
+ * The verifier pipeline (agent.md §9). Pure library: every external call
  * goes through an injected client, so tests replay recorded responses.
  *
  * Honesty: with standard x402 a tick is paid, then judged. A failing tick

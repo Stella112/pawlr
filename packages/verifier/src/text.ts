@@ -8,7 +8,7 @@ export function normalizeWhitespace(s: string): string {
 }
 
 /**
- * Sentence splitter (documented, CLAUDE.md §9 step 3).
+ * Sentence splitter (documented, agent.md §9 step 3).
  *
  * A sentence is a run of text ending in one or more of `.`, `!` or `?`
  * that is followed by whitespace or the end of the text. Text after the last
@@ -89,7 +89,7 @@ export function matchedKeyTerms(text: string, terms: string[]): string[] {
 }
 
 /**
- * The quote-or-hold rule (CLAUDE.md §9 step 7): the quote must be non-empty
+ * The quote-or-hold rule (agent.md §9 step 7): the quote must be non-empty
  * and an exact substring of the seller output or of the section text, after
  * whitespace normalisation only.
  */

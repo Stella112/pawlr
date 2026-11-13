@@ -33,7 +33,7 @@ const PLACEHOLDER_ADDRESSES = new Set([
 export class ConfigError extends Error {}
 
 /**
- * Reads seller config from env. Mainnet guards (CLAUDE.md §2.3, §4): refuse a
+ * Reads seller config from env. Mainnet guards (agent.md §2.3, §4): refuse a
  * placeholder receiving address, a price above $0.05 per tick, or an admin
  * password shorter than 16 characters.
  */

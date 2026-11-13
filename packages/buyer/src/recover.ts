@@ -2,7 +2,7 @@ import { kiteChainByNetwork, toBaseUnits, type DeliveryConditions, type RefundCl
 import { parseResponse, usageOf, type ChatTransport } from "@pawlr/verifier";
 
 /**
- * Recover (CLAUDE.md §10.2): SERV Reasoning drafts one refund claim from the
+ * Recover (agent.md §10.2): SERV Reasoning drafts one refund claim from the
  * receipt data only; code re-checks the amount and wins on any mismatch.
  * The claim is a request. Money is not returned automatically.
  */

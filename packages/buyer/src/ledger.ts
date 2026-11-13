@@ -8,7 +8,7 @@ import type { TickEvidence, TickVerdict } from "@pawlr/protocol";
  * The "paying" entry is written and flushed to disk BEFORE any payment is
  * sent. If the process dies after that, the next run finds the entry and
  * recovers by the same idempotency key instead of paying again
- * (CLAUDE.md §2.3, §10.1).
+ * (agent.md §2.3, §10.1).
  */
 
 export type TickState = "paying" | "paid" | "uncertain" | "not-charged";

@@ -1,7 +1,7 @@
-# Pawlr: Build Instructions for Claude Code
+# Pawlr: Build Instructions for the Coding Agent
 
-> **How to use this file.** Save it as `CLAUDE.md` in the root of the Pawlr repository , so Claude Code loads it in every session. Start the session with this message:
-> *"Read CLAUDE.md in full. The folder is empty and nothing is built yet. Do Phase 0 and give me the Phase 0 report before writing any feature code."*
+> **How to use this file.** Save it as `agent.md` in the root of the Pawlr repository, so the coding agent loads it in every session. Start the session with this message:
+> *"Read agent.md in full. The folder is empty and nothing is built yet. Do Phase 0 and give me the Phase 0 report before writing any feature code."*
 
 ---
 
@@ -199,7 +199,7 @@ If Passport cannot be driven per tick from code, stop and report. Present the op
 
 ```
 /                      pnpm workspace root
-├─ CLAUDE.md
+├─ agent.md
 ├─ README.md           includes the live-versus-simulated table
 ├─ .env.example
 ├─ docs/
