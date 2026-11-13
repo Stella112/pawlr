@@ -53,7 +53,17 @@ importers:
 
   examples/seller-minimal: {}
 
-  packages/buyer: {}
+  packages/buyer:
+    dependencies:
+      '@pawlr/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@pawlr/verifier':
+        specifier: workspace:*
+        version: link:../verifier
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/protocol:
     dependencies:

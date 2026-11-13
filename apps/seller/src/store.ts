@@ -90,6 +90,15 @@ export class Store {
     return this.readTruth(id).find((e) => e.tick === tick)?.evidence;
   }
 
+  recordSettlement(id: string, tick: number, settle: unknown) {
+    this.appendJsonl(this.path("settlements", `${id}.jsonl`), { tick, at: new Date().toISOString(), settle });
+  }
+  getSettlement(id: string, tick: number) {
+    return this.readJsonl<{ tick: number; settle: unknown }>(this.path("settlements", `${id}.jsonl`)).find((e) => e.tick === tick)?.settle as
+      | { transaction?: string; network?: string; success?: boolean }
+      | undefined;
+  }
+
   addEvidence(id: string, tick: number, added: unknown) {
     const entry = { id: randomUUID(), tick, at: new Date().toISOString(), added };
     this.appendJsonl(this.path("added-evidence", `${id}.jsonl`), entry);

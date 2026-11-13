@@ -106,6 +106,9 @@ describe("paywall", () => {
     expect(s.fac.calls.settle).toBe(1);
     const receipt = unb64json(res.headers.get("payment-response")!);
     expect(receipt.transaction).toBe("0xTESTDOUBLE0001");
+    // The settlement is recorded and shown with the evidence.
+    const read = await (await s.app.request(`/sessions/${body.sessionId}/evidence/1`)).json();
+    expect(read.settlement.transaction).toBe("0xTESTDOUBLE0001");
   });
 
   it("does not settle when the tick handler fails (error status, buyer not charged)", async () => {

@@ -160,6 +160,20 @@ export function createPublicApp(opts: {
   });
 
   // ── Paid: one tick (x402) ────────────────────────────────────────────────
+  // Outer middleware: after the paywall settles, record the facilitator's
+  // settlement (PAYMENT-RESPONSE header, base64 JSON SettleResponse with
+  // `transaction`, read from @x402/core source) so it can be shown with the evidence.
+  app.use("/tick/:sessionId/:n", async (c, next) => {
+    await next();
+    const header = c.res.headers.get("payment-response");
+    if (!header || c.res.status >= 400) return;
+    try {
+      const settle = JSON.parse(Buffer.from(header, "base64").toString("utf8"));
+      store.recordSettlement(c.req.param("sessionId"), Number(c.req.param("n")), settle);
+    } catch {
+      /* never break a paid response over bookkeeping */
+    }
+  });
   app.use("/tick/*", paymentMiddlewareFromHTTPServer(httpServer, undefined, undefined, opts.syncFacilitatorOnStart ?? true));
   app.get("/tick/:sessionId/:n", async (c) => {
     // Reached only after the paywall verified a payment. A status >= 400 here
@@ -180,7 +194,7 @@ export function createPublicApp(opts: {
     const tick = Number(c.req.param("tick"));
     const evidence = store.getServedEvidence(id, tick);
     if (!evidence) return c.json({ error: "no evidence for that tick" }, 404);
-    return c.json({ evidence, added: store.getAddedEvidence(id, tick) });
+    return c.json({ evidence, settlement: store.getSettlement(id, tick) ?? null, added: store.getAddedEvidence(id, tick) });
   });
 
   // ── Admin: seller adds evidence to a disputed tick ───────────────────────

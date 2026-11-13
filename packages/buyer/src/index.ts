@@ -1,3 +1,5 @@
-// @pawlr/buyer: Buyer client and CLI: conditions, Passport payment per tick, verify, pause, receipt
-// Placeholder so the workspace builds (Phase 0). No feature code yet.
-export {};
+export * from "./document.js";
+export * from "./challenge.js";
+export * from "./ledger.js";
+export * from "./payer.js";
+export * from "./run.js";
