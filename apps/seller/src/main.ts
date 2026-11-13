@@ -6,6 +6,7 @@ import { createPublicApp, httpTickForwarder } from "./server.js";
 import { Store } from "./store.js";
 import { CachedSummarizer, ServSummarizer } from "./summarizer.js";
 import { createTickService } from "./tickService.js";
+import { SimulatedFacilitator } from "./simulatedFacilitator.js";
 
 let config;
 try {
@@ -29,12 +30,13 @@ serve({ fetch: tickApp.fetch, port: config.internalPort, hostname: "127.0.0.1" }
 const app = createPublicApp({
   config,
   store,
-  facilitator: new HTTPFacilitatorClient({ url: config.facilitatorUrl }),
+  // SIMULATED settlement only when SETTLEMENT_MODE=simulated (testnet only): real signature checks, no on-chain transfer.
+  facilitator: config.settlementMode === "simulated" ? new SimulatedFacilitator(config.chain) : new HTTPFacilitatorClient({ url: config.facilitatorUrl }),
   forwardTick: httpTickForwarder(config.internalPort),
 });
 const cfg = config;
 serve({ fetch: app.fetch, port: cfg.port, hostname: cfg.host }, (info) => {
   console.log(
-    `pawlr-seller on :${info.port} (${cfg.chain.network}, ${cfg.pricePerTick} ${cfg.chain.assetSymbol} per tick to ${cfg.payTo}); tick service on 127.0.0.1:${cfg.internalPort}`,
+    `pawlr-seller on :${info.port} (${cfg.chain.network}, settlement ${cfg.settlementMode === "simulated" ? "SIMULATED" : "facilitator"}, ${cfg.pricePerTick} ${cfg.chain.assetSymbol} per tick to ${cfg.payTo}); tick service on 127.0.0.1:${cfg.internalPort}`,
   );
 });

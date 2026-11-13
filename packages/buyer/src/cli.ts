@@ -25,6 +25,7 @@ async function main() {
       data: { type: "string", default: "data" },
       "session-id": { type: "string" },
       payer: { type: "string", default: "kpass" },
+      "simulate-failure": { type: "string" },
     },
   });
   if (positionals[0] !== "run" || !values.doc) {
@@ -46,6 +47,20 @@ async function main() {
   console.log(`Conditions for ${conditions.sessionId}: ${sections.length} sections, ${conditions.maxTicks} ticks at ${conditions.pricePerTick}, cap ${conditions.maxSpend}`);
   const conditionsHash = await agreeSession(seller, conditions, sections);
   console.log(`Agreed. conditionsHash ${conditionsHash}`);
+
+  // Demo only: stage a SIMULATED failure on the seller (mode@fromTick, e.g. injection@3). Needs ADMIN_PASSWORD.
+  if (values["simulate-failure"]) {
+    const [mode, from] = values["simulate-failure"].split("@");
+    const pw = (process.env.ADMIN_PASSWORD ?? "").trim();
+    if (!pw) throw new Error("--simulate-failure needs the seller's ADMIN_PASSWORD in .env");
+    const r = await fetch(`${seller.baseUrl}/admin/failure`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${pw}` },
+      body: JSON.stringify({ sessionId: conditions.sessionId, mode, fromTick: Number(from) }),
+    });
+    if (!r.ok) throw new Error(`could not stage the simulated failure: ${r.status} ${await r.text()}`);
+    console.log(`SIMULATED FAILURE staged on the seller: "${mode}" from tick ${from} (the tick responses will not reveal it)`);
+  }
 
   let payer: Payer;
   if (values.payer === "wallet") {
@@ -70,7 +85,9 @@ async function main() {
     },
     {
       log: (l) => console.log(l),
-      onTick: (v) => v.payment.txHash && console.log(`  tx: ${EXPLORER[network]}${v.payment.txHash}`),
+      onTick: (v) =>
+        v.payment.txHash &&
+        console.log(v.payment.txHash.startsWith("SIMULATED-") ? `  settlement: ${v.payment.txHash} (SIMULATED: signed authorization verified, no on-chain tx)` : `  tx: ${EXPLORER[network]}${v.payment.txHash}`),
     },
   );
   console.log(`\nStopped: ${stoppedBecause}`);

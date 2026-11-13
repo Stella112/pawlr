@@ -13,6 +13,8 @@ export interface SellerConfig {
   /** Internal tick service port, bound to 127.0.0.1 only. */
   internalPort: number;
   facilitatorUrl: string;
+  /** "facilitator": real settlement via Pieverse. "simulated": real signature checks, no on-chain transfer (labelled everywhere). */
+  settlementMode: "facilitator" | "simulated";
   dataDir: string;
   publicBaseUrl: string;
   servApiKey: string;
@@ -64,6 +66,10 @@ export function loadConfig(env: Record<string, string | undefined>): SellerConfi
     }
   }
 
+  const settlementMode = get("SETTLEMENT_MODE", "facilitator");
+  if (settlementMode !== "facilitator" && settlementMode !== "simulated") throw new ConfigError("SETTLEMENT_MODE must be facilitator or simulated");
+  if (chain.name === "mainnet" && settlementMode === "simulated") throw new ConfigError("mainnet refused: SETTLEMENT_MODE=simulated is testnet only");
+
   const port = Number(get("PORT", "8080"));
   const internalPort = Number(get("INTERNAL_TICK_PORT", "8081"));
   if (port === internalPort) throw new ConfigError("PORT and INTERNAL_TICK_PORT must differ");
@@ -77,6 +83,7 @@ export function loadConfig(env: Record<string, string | undefined>): SellerConfi
     host: get("HOST", "0.0.0.0"),
     internalPort,
     facilitatorUrl: get("FACILITATOR_URL", FACILITATOR_URL),
+    settlementMode,
     dataDir: get("DATA_DIR", "data"),
     publicBaseUrl: get("PUBLIC_BASE_URL"),
     servApiKey: get("SERV_API_KEY"),

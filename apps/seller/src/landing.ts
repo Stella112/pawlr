@@ -32,7 +32,7 @@ export function landingPage(config: SellerConfig, version: string): string {
 </head>
 <body>
 <main>
-  <span class="chip">Live on ${esc(net)}</span>
+  <span class="chip">Live on ${esc(net)}</span>${config.settlementMode === "simulated" ? ' <span class="chip" style="background:#fdecc8;color:#7a4b00">Settlement: SIMULATED</span>' : ""}
   <h1>Pawlr</h1>
   <p class="tag">The catch that stops paying the moment delivery fails.</p>
   <p>Pawlr pays a service one tick at a time, checks each delivery against conditions both sides agreed, and stops paying the moment delivery fails. The most a buyer can lose is one tick.</p>
@@ -55,12 +55,13 @@ export function landingPage(config: SellerConfig, version: string): string {
       <dt>Network</dt><dd>${esc(config.chain.network)} (${esc(config.chain.assetSymbol)})</dd>
       <dt>Price</dt><dd>${esc(config.pricePerTick)} ${esc(config.chain.assetSymbol)} per tick</dd>
       <dt>Pays to</dt><dd>${esc(config.payTo)}</dd>
+      <dt>Settlement</dt><dd>${config.settlementMode === "simulated" ? "SIMULATED: each payment is a real signed EIP-3009 authorization, verified by the seller; no tokens move on-chain" : "On-chain via the Pieverse facilitator"}</dd>
       <dt>Status</dt><dd><a href="/health">/health</a></dd>
       <dt>Version</dt><dd>${esc(version)}</dd>
     </dl>
   </div>
 
-  <p class="foot">Built for the OpenServ SERV Hackathon, Kite track. Payments: x402 via the Pieverse facilitator. Judging: SERV Reasoning.</p>
+  <p class="foot">Built for the OpenServ SERV Hackathon, Kite track. Payments: x402 on Kite${config.settlementMode === "simulated" ? " (settlement SIMULATED on this deployment)" : " via the Pieverse facilitator"}. Judging: SERV Reasoning.</p>
 </main>
 </body>
 </html>`;
