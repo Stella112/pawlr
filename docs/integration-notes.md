@@ -156,6 +156,18 @@ Built 2026-11-13 because Passport refuses non-catalog hosts. `pawlr run --payer 
 | **Client spend controls refuse non-default assets by default** ("only default assets or entries in spendControls.allowedAssets are allowed"); Kite pieUSD/USDC.e need `setSpendControls({ allowedAssets: [{ network, asset, maxAmountPerPayment }] })` | CAPTURED (test run) + SRC | error seen 2026-11-13; type in `x402Client-CWf4x4tk.d.mts` |
 | Live payment on this route | **OPEN** | Needs a funded buyer wallet: testnet pieUSD has no public source (fixed 1,000,000 supply held by creator `0xCfF4…FF52`, contract unverified; Blockscout API 2026-11-13), so a live run means Kite mainnet USDC.e and Maris's "go mainnet" |
 
+## 3c. Workaround: SIMULATED settlement (2026-11-13)
+
+Maris could not fund mainnet and Kite had not allowlisted the host, so no route to real on-chain settlement was available:
+
+| Checked | Result | Evidence |
+|---|---|---|
+| Kite testnet "Test USD" (USDT) `0x0fF5393387ad2f9f691FD6Fd28e07E3969e27e63` (the web faucet's USDT; the "Settlement Token" on Kite's AA SDK page) | Plain ERC-20 (`StakeToken`), **no EIP-3009**, `mint` is `onlyOwner` | Blockscout API `/api/v2/smart-contracts/…` (verified source) |
+| Permit2 `0x000000000022D473030F116dDEE9F6B43aC78BA3` and x402 Permit2 proxy `0x402085c248EeA27D92E8b30b2C58ed07f9E20001` (addresses from @x402/evm constants) on Kite testnet | **No code at either address** | `eth_getCode` via https://rpc-testnet.gokite.ai |
+| pieUSD | No public source (see §3b) | |
+
+Workaround: `SETTLEMENT_MODE=simulated` on the seller (`apps/seller/src/simulatedFacilitator.ts`). The buyer signs a real EIP-3009 TransferWithAuthorization with the official x402 client; the seller verifies the EIP-712 signature (viem `verifyTypedData`), payee, amount, asset, network, time window and one-time nonce; no transaction is broadcast and settlement ids start with `SIMULATED-`. Testnet only (mainnet refuses it). Labelled in /health, the landing page and CLI output.
+
 ## 4. Dolphin
 
 **OPEN.** Base URL, auth, request format and model ID needed from Maris.
