@@ -50,7 +50,7 @@ const maxTicks = SCENARIOS.length * K;
 const SERV_PER_RULING = 0.0015; // observed ~$0.001 per ruling (docs/integration-notes.md); padded
 console.log(`Pawlr benchmark on ${seller.network} against ${seller.baseUrl}`);
 console.log(`Scenarios: ${SCENARIOS.join(", ")}; ${K} ticks each, staged failure from tick ${N}.`);
-console.log(`Estimated spend (upper bound): ${maxTicks} ticks x ${price} = ${(maxTicks * price).toFixed(3)} test tokens; SERV ~$${(maxTicks * SERV_PER_RULING).toFixed(3)}; Dolphin $0 and Reppo 0 credits (not built).`);
+console.log(`Estimated spend (upper bound): ${maxTicks} ticks x ${price} = ${(maxTicks * price).toFixed(3)} test tokens; SERV ~$${(maxTicks * SERV_PER_RULING).toFixed(3)}; Dolphin and Reppo are measured separately by partners.js.`);
 if (!values.yes) {
   console.log("Dry run. Re-run with --yes to spend.");
   process.exit(0);
@@ -155,7 +155,7 @@ const md = `# Benchmark
 
 **Run:** ${new Date().toISOString()} · **Network:** Kite testnet (\`${seller.network}\`) · **Seller:** ${seller.baseUrl}
 **Payments:** real, settled on-chain in Pawlr Test USD (pUSD). **Failures:** STAGED with the seller's failure switch from tick ${N}; ground truth is the seller's truth log.
-**Configurations measured:** code + SERV Reasoning (what ran) and code only (the same evidence judged by the code checks alone). Dolphin and Reppo are not built, so those configurations are not measured.
+**Configurations measured:** code + SERV Reasoning (what ran) and code only (the same evidence judged by the code checks alone). Dolphin (economy mode) and Reppo agreement are measured on the same evidence by \`apps/bench/dist/partners.js\`: see the Partners section below.
 
 ## Per scenario (${K} ticks each)
 
