@@ -109,6 +109,8 @@ Stages run in order and stop at the first decisive result:
 4. **Guard + relevance** (model): one structured ruling `{ verdict, quote, reason }` with a prompt-injection guard in the same request. A guard refusal → `unsure` ("evidence flagged as injection attempt"), never `pass`.
 5. **Quote-or-hold** (code): the quote must be a non-empty exact substring of the output or the section text after whitespace normalisation only. Otherwise, or on invalid, truncated, refused or off-schema output → `unsure`.
 6. **Second look** on `unsure`: re-run with validation; still unclear → review.
+   - Optional **screen** before step 4: a cheaper model gives the same `{ verdict, quote, reason }`, quote-checked by code. A screen `fail` or `unsure` always escalates. Only an implementation's explicit economy mode may let a screen `pass` settle a tick.
+   - Optional **dispute** after a `fail` or `unsure`: an independent judge (the reference implementation uses Reppo) rules on the same conditions, section text, output and any evidence the seller added. Only its `pass` resumes the session; `decidedBy` becomes `"reppo"` and `checks.dispute` records the result.
 7. Errors: one retry on 429/5xx, then `unsure` ("judge unavailable"). **Never pass on error.**
 
 Meanings: `pass` = the buyer may pay the next tick. `fail` = pause; show the reason and quote to both sides. `unsure` = pause for a person (or an independent judge); the session resumes only on `pass`.

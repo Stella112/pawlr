@@ -22,6 +22,10 @@ Pawlr: the catch that stops paying the moment delivery fails. It pays a service 
 - The token is **Pawlr Test USD**, our own testnet-only EIP-3009 token, because pieUSD (the testnet token Kite's x402 setup lists) has no public source.
 - Kite Passport is wired in (spending session with per-payment and total caps, approved with a passkey; payment per tick with an idempotency key), but Passport refused our host because it is not in Kite's service catalog. The live demo pays with the official x402 client from a wallet, with Pawlr's own per-tick and per-session caps.
 
+## Dolphin and Reppo
+- **Dolphin** (`deepseek-ai/DeepSeek-V4.1-Flash`) screens every tick that passes the code checks with the same structured ruling, quote-checked by code. A fail or unsure always goes to SERV. In economy mode a clean Dolphin pass settles the tick: on the benchmark evidence this kept 0 false accepts and 0 false rejects and cut judging cost per tick from about $0.00095 to $0.00006.
+- **Reppo** gives an independent verdict on a disputed tick from the console: its evaluator panel's route (`ship` / `review` / `block`) maps to pass / unsure / fail, and only a pass resumes payments. On the benchmark's disputed ticks Reppo agreed with Pawlr 4 of 6 times; the differences (a stale timestamp it cannot see, an empty output it sent to review) are listed in the benchmark.
+
 ## Creativity
 A ratchet's pawl for agent payments: written, hashed delivery conditions, code-first checks, and a model that must quote its evidence turn "pay and hope" into "pay, check, and stop at the first bad tick".
 
@@ -32,7 +36,7 @@ Live seller and console on public https; real on-chain testnet payments; one-cli
 A small fee per verified tick, charged to buyers who want the guarantee and sellers who want the trust badge, plus an open protocol and SDK that any x402 service can add, so every verified tick across the ecosystem can run through Pawlr.
 
 ## Proof
-Benchmark from real testnet runs (docs/benchmark.md): every staged failure caught at the first bad tick, exactly one bad tick paid per scenario, 0 false accepts and 0 false rejects with code + SERV; code alone would have paid the hidden-instruction tick that SERV caught.
+Benchmark from real testnet runs (docs/benchmark.md): every staged failure caught at the first bad tick, exactly one bad tick paid per scenario, 0 false accepts and 0 false rejects with code + SERV, and with code + Dolphin + SERV in economy mode; code alone would have paid the hidden-instruction tick that SERV caught. Reppo agreed with Pawlr on 4 of 6 disputed ticks.
 
 ## Not built (stated plainly)
-Dolphin screening and Reppo disputes (API details were not available in time). Kite Passport payments are built but blocked by Kite's catalog allowlist. The SDK packages are consumed from the repo, not published to npm.
+Kite Passport payments are built but blocked by Kite's catalog allowlist. Mainnet has not been run. The SDK packages are consumed from the repo, not published to npm.
