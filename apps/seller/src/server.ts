@@ -118,7 +118,7 @@ export function createPublicApp(opts: {
     return given.length > 0 && sameSecret(given, config.adminPassword);
   };
 
-  app.get("/", (c) => c.html(landingPage(config, SELLER_VERSION)));
+  app.get("/", (c) => c.html(landingPage()));
 
   app.get("/health", (c) =>
     c.json({

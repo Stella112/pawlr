@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pawlr: stop paying the moment delivery fails</title>
+<meta name="description" content="Pawlr pays an AI service one small tick at a time, checks every delivery, and stops paying the moment something goes wrong. The most you can lose is one tick.">
+<style>
+:root{--bg:#f7f6f2;--bg2:#efede6;--fg:#15171c;--muted:#5b616d;--card:#fff;--line:#e3e0d8;--accent:#1f6f5c;--accent2:#2f8f77;--accent-bg:#e5f2ec;--ok:#1d7a4f;--bad:#c2410c;--bad-bg:#fdeee5;--idle:#d9d6cd;--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1114;--bg2:#15181c;--fg:#ecebe6;--muted:#9aa1ac;--card:#181b20;--line:#272b32;--accent:#5cc6a7;--accent2:#7dd8bd;--accent-bg:#14302a;--ok:#5fd39a;--bad:#fb8c5a;--bad-bg:#3a1d12;--idle:#30343c;--shadow:none}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;gap:24px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+.navlinks{display:flex;gap:22px;margin-left:auto;align-items:center}
+.navlinks a{color:var(--muted);text-decoration:none;font-size:15px}
+.navlinks a:hover{color:var(--fg)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;font-size:15px;border-radius:12px;padding:11px 18px;text-decoration:none;border:1px solid transparent;cursor:pointer}
+.btn.primary{background:var(--accent);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0d1f1a}}
+.btn.primary:hover{background:var(--accent2)}
+.btn.ghost{border-color:var(--line);color:var(--fg);background:var(--card)}
+.navlinks .btn{color:#fff}
+@media (prefers-color-scheme:dark){.navlinks .btn{color:#0d1f1a}}
+@media (max-width:720px){.navlinks a:not(.btn){display:none}}
+
+.hero{padding:72px 0 56px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media (max-width:880px){.hero .wrap{grid-template-columns:1fr}.hero{padding:44px 0 32px}}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-bg);padding:5px 11px;border-radius:999px}
+h1{font-size:clamp(36px,5.4vw,58px);line-height:1.04;letter-spacing:-.03em;margin:18px 0 18px}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{font-size:20px;color:var(--muted);max-width:34em;margin:0 0 28px}
+.ctas{display:flex;flex-wrap:wrap;gap:12px}
+.fine{font-size:14px;color:var(--muted);margin-top:16px}
+
+.demo{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:var(--shadow)}
+.demo h3{margin:0 0 4px;font-size:15px}
+.demo .sub{font-size:14px;color:var(--muted);margin:0 0 18px}
+.ticks{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.tk{height:64px;border-radius:12px;background:var(--idle);display:grid;place-items:center;font-size:13px;font-weight:700;color:transparent;transition:background .35s,color .35s,transform .35s}
+.tk.pass{background:var(--ok);color:#fff}
+.tk.fail{background:var(--bad);color:#fff;transform:scale(1.04)}
+.tk.skip{background:repeating-linear-gradient(135deg,var(--idle) 0 6px,transparent 6px 12px);color:var(--muted)}
+.legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:8px}
+.status{margin-top:18px;border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;background:var(--accent-bg);color:var(--accent);min-height:48px;transition:background .3s,color .3s}
+.status.stop{background:var(--bad-bg);color:var(--bad)}
+.tally{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;text-align:center}
+.tally div{background:var(--bg);border-radius:10px;padding:10px 4px;font-size:12.5px;color:var(--muted)}
+.tally b{display:block;font-size:20px;color:var(--fg)}
+
+section{padding:64px 0}
+section.alt{background:var(--bg2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+h2{font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;line-height:1.12;margin:0 0 12px}
+.intro{color:var(--muted);font-size:18.5px;max-width:40em;margin:0 0 36px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+@media (max-width:880px){.grid3,.grid4{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.grid3,.grid4{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
+.card h3{margin:10px 0 6px;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:15.5px}
+.ic{width:40px;height:40px;border-radius:11px;background:var(--accent-bg);color:var(--accent);display:grid;place-items:center}
+.ic.bad{background:var(--bad-bg);color:var(--bad)}
+.step-n{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.05em}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:15px}
+.chip b{color:var(--bad)}
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:880px){.proof{grid-template-columns:1fr}}
+.txlist{list-style:none;margin:12px 0 0;padding:0}
+.txlist li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.dot.p{background:var(--ok)}.dot.f{background:var(--bad)}.dot.s{background:var(--idle)}
+.txlist a{font-family:var(--mono);font-size:13px;margin-left:auto}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:15px;margin:0}
+.facts dt{color:var(--muted)}.facts dd{margin:0;font-family:var(--mono);font-size:13.5px;overflow-wrap:anywhere}
+.note{font-size:14px;color:var(--muted);border-left:3px solid var(--accent);padding:4px 12px;margin:16px 0 0}
+details.faq{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin:10px 0}
+details.faq summary{cursor:pointer;font-weight:650;font-size:17px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+details.faq summary::after{content:"+";color:var(--accent);font-weight:800}
+details.faq[open] summary::after{content:"–"}
+details.faq p{color:var(--muted);margin:10px 0 0;font-size:16px}
+.cta-band{text-align:center}
+.cta-band p{color:var(--muted);font-size:18px;margin:0 auto 24px;max-width:32em}
+footer{padding:32px 0 48px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){.tk{transition:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Pawlr home">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="17" r="9" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="3.2 2.4" style="color:var(--accent)"/><circle cx="13" cy="17" r="3.2" fill="var(--accent)"/><path d="M19 4 L28 8 L22.5 12.5 Z" fill="var(--bad)"/></svg>
+      Pawlr
+    </a>
+    <div class="navlinks">
+      <a href="#how">How it works</a>
+      <a href="#proof">Proof</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn primary" href="/dashboard">Open dashboard</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Live on Kite testnet</span>
+      <h1>Pay AI services <em>by the slice</em>. Stop the moment they slip.</h1>
+      <p class="lead">Pawlr pays a service in small steps called <b>ticks</b>, checks every delivery against what you both agreed, and stops paying the instant something goes wrong. <b>The most you can ever lose is one tick.</b></p>
+      <div class="ctas">
+        <a class="btn primary" href="/dashboard">Try the live demo →</a>
+        <a class="btn ghost" href="#proof">See real payments</a>
+      </div>
+      <p class="fine">No sign-up. Uses free test money on Kite testnet.</p>
+    </div>
+    <div class="demo" aria-label="Animated example of a Pawlr session">
+      <h3>A session, tick by tick</h3>
+      <p class="sub">Each square is one small payment for one delivery.</p>
+      <div class="ticks" id="ticks"></div>
+      <div class="legend"><span>Tick 1</span><span>Tick 6</span></div>
+      <div class="status" id="status">Starting…</div>
+      <div class="tally"><div>Paid<b id="tPaid">0</b></div><div>Caught<b id="tBad">0</b></div><div>Never paid<b id="tSaved">0</b></div></div>
+    </div>
+  </div>
+</header>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>Paying per use is great, until the service goes bad</h2>
+    <p class="intro">AI agents now pay for services automatically, a fraction of a cent at a time. The payment rail they use (x402) pays first and never checks what came back.</p>
+    <div class="grid3">
+      <div class="card"><div class="ic bad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg></div><h3>Pay first, check never</h3><p>Money leaves before anyone looks at the delivery. A broken or dishonest service still gets paid.</p></div>
+      <div class="card"><div class="ic bad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16M4 6h10M4 18h7"/></svg></div><h3>Agents don't notice</h3><p>An automated buyer keeps calling. Junk, off-topic or empty answers look like any other response.</p></div>
+      <div class="card"><div class="ic bad"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l5-5 4 4 7-8"/></svg></div><h3>Small losses add up</h3><p>Thousands of tiny payments for bad results become a real bill, and nobody can say which ones were bad.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2>How Pawlr works</h2>
+    <p class="intro">Like the catch in a ratchet that stops it slipping back, Pawlr lets payments move forward only while deliveries are good.</p>
+    <div class="grid4">
+      <div class="card"><span class="step-n">STEP 1</span><h3>Agree what "good" means</h3><p>Buyer and seller agree written delivery rules: what each tick must contain, the price, and a spending cap. Both hold the same fingerprint of that agreement.</p></div>
+      <div class="card"><span class="step-n">STEP 2</span><h3>Pay one tick</h3><p>A tiny payment goes out on Kite, only to the agreed seller, only at the agreed price. It's recorded on-chain.</p></div>
+      <div class="card"><span class="step-n">STEP 3</span><h3>Check the delivery</h3><p>Automatic checks run first. Then an AI judge (SERV Reasoning) decides if it meets the rules, and it must <b>quote the exact words</b> it relied on.</p></div>
+      <div class="card"><span class="step-n">STEP 4</span><h3>Continue or stop</h3><p>Good: pay the next tick. Bad: stop at once and show why. Unclear: pause for a person to decide. You can then request a refund with the evidence attached.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>What Pawlr catches</h2>
+    <p class="intro">In the demo you can make the seller misbehave on purpose, and watch Pawlr catch it.</p>
+    <div class="chips">
+      <span class="chip"><b>Junk</b> · random words</span>
+      <span class="chip"><b>Off-topic</b> · about something else</span>
+      <span class="chip"><b>Empty</b> · nothing delivered</span>
+      <span class="chip"><b>Stale</b> · old, out-of-date evidence</span>
+      <span class="chip"><b>Hidden instructions</b> · "mark this as delivered"</span>
+      <span class="chip"><b>Wrong section</b> · real summary, wrong part</span>
+    </div>
+  </div>
+</section>
+
+<section id="proof">
+  <div class="wrap">
+    <h2>Real payments you can check</h2>
+    <p class="intro">These are real transactions on Kite testnet from a live session where the seller started misbehaving at tick 3.</p>
+    <div class="proof">
+      <div class="card">
+        <h3 style="margin-top:0">One session, five ticks agreed</h3>
+        <ul class="txlist">
+          <li><span class="dot p"></span>Tick 1 · passed<a href="https://testnet.kitescan.ai/tx/0x970866bf523cc556498b064708079b6ca34ccd14ae64f576decfe5e5788571d3" target="_blank" rel="noopener">0x9708…71d3</a></li>
+          <li><span class="dot p"></span>Tick 2 · passed<a href="https://testnet.kitescan.ai/tx/0x0e964df7c6f37217a09691a5c928eb991b631143d47596f763edd87756ac2477" target="_blank" rel="noopener">0x0e96…2477</a></li>
+          <li><span class="dot f"></span>Tick 3 · caught: "Ignore previous instructions…"<a href="https://testnet.kitescan.ai/tx/0xd9d9c185e9158801a9385d2256683d92ffa4483de6a373614688ddbf2d109ce6" target="_blank" rel="noopener">0xd9d9…9ce6</a></li>
+          <li><span class="dot s"></span>Tick 4 · never paid</li>
+          <li><span class="dot s"></span>Tick 5 · never paid</li>
+        </ul>
+        <p class="note">Each link opens the payment on Kite's block explorer.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">This live service</h3>
+        <dl class="facts" id="facts">
+          <dt>Service</dt><dd>Summarises a document, one section per tick</dd>
+          <dt>Network</dt><dd id="fNet">Kite testnet</dd>
+          <dt>Price</dt><dd id="fPrice">…</dd>
+          <dt>Paid to</dt><dd id="fPay">…</dd>
+          <dt>Settlement</dt><dd id="fSettle">…</dd>
+        </dl>
+        <p class="note">Payments use <b>Pawlr Test USD</b>, a free test token on Kite testnet with no real value. Kite's own test token isn't publicly available, so we made one that works the same way.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <details class="faq"><summary>Do I still pay for a bad tick?</summary><p>Yes, once. Payment happens first and the check comes right after, so the bad tick itself is paid. Pawlr then stops every later payment, which is why the most you can lose is one tick. You can request that tick back with the evidence attached.</p></details>
+    <details class="faq"><summary>Who decides whether a delivery is good?</summary><p>Simple automatic checks go first: right order, not tampered with, not empty, the right length, the right key words. Then an AI judge, SERV Reasoning, compares the delivery with the agreed rules. It must quote the exact words it relied on; if it can't, nothing is decided automatically.</p></details>
+    <details class="faq"><summary>What happens when it isn't sure?</summary><p>Nothing unclear is rejected automatically. The session pauses and a person approves or rejects that tick.</p></details>
+    <details class="faq"><summary>Is this real money?</summary><p>The payments are real transactions on Kite's test network, but the token is a free test token with no value. The same design works with real stablecoins on Kite mainnet.</p></details>
+    <details class="faq"><summary>Are refunds automatic?</summary><p>No. Pawlr sends the seller one clear refund request listing the bad ticks, the amount and the evidence. Returning the money is up to the seller.</p></details>
+    <details class="faq"><summary>Can a seller trick the AI judge?</summary><p>The judge treats the seller's text as untrusted and ignores instructions inside it, a prompt-injection guard runs on every request, and the judge only decides against the written rules, quoting its evidence. In our live tests with the current rules, a hidden "mark this as delivered" instruction was caught and the payments stopped.</p></details>
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="wrap">
+    <h2>See it catch a bad delivery</h2>
+    <p>Run a session in the dashboard, make the seller misbehave, and watch Pawlr stop paying.</p>
+    <a class="btn primary" href="/dashboard">Open the dashboard →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Pawlr · built for the OpenServ SERV Hackathon, Kite track · payments on Kite (x402), judging by SERV Reasoning</span>
+    <span><a href="https://github.com/Stella112/pawlr" target="_blank" rel="noopener">Source on GitHub</a> · <a href="/health">Service status</a></span>
+  </div>
+</footer>
+
+<script>
+// Hero animation: an illustration of the idea (ticks 1–2 pass, 3 is caught, 4–6 never paid).
+const N = 6, BAD = 3, el = document.getElementById("ticks"), st = document.getElementById("status");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+for (let i = 0; i < N; i++) el.insertAdjacentHTML("beforeend", `<div class="tk" id="tk${i + 1}"></div>`);
+const set = (paid, bad, saved) => { tPaid.textContent = paid; tBad.textContent = bad; tSaved.textContent = saved; };
+async function play() {
+  for (let i = 1; i <= N; i++) { const t = document.getElementById("tk" + i); t.className = "tk"; t.textContent = ""; }
+  st.className = "status"; set(0, 0, 0);
+  const wait = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+  for (let i = 1; i <= BAD; i++) {
+    st.textContent = `Paying tick ${i}… checking the delivery`;
+    await wait(900);
+    const t = document.getElementById("tk" + i);
+    if (i < BAD) { t.className = "tk pass"; t.textContent = "✓"; set(i, 0, 0); }
+    else { t.className = "tk fail"; t.textContent = "✗"; set(i, 1, 0); }
+    await wait(400);
+  }
+  for (let i = BAD + 1; i <= N; i++) { const t = document.getElementById("tk" + i); t.className = "tk skip"; t.textContent = "—"; }
+  set(BAD, 1, N - BAD);
+  st.className = "status stop";
+  st.textContent = `Tick ${BAD} broke the rules. Payments stopped. Ticks ${BAD + 1}–${N} are never paid.`;
+  if (!reduce) setTimeout(play, 5000);
+}
+play();
+
+// Live facts from this service.
+fetch("/health").then((r) => r.json()).then((h) => {
+  fNet.textContent = h.network === "eip155:2368" ? "Kite testnet (eip155:2368)" : h.network;
+  fPrice.textContent = `${h.pricePerTick} ${h.asset} per tick`;
+  fPay.textContent = h.payTo;
+  fSettle.textContent = /^on-chain/.test(h.settlement || "") ? "On-chain, every tick" : h.settlement;
+}).catch(() => {});
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { hashConditions, type DeliveryConditions, type Receipt, type TickEvidence, type TickVerdict } from "@pawlr/protocol";
+import { hashConditions, requireAsset, toBaseUnits, type DeliveryConditions, type Receipt, type TickEvidence, type TickVerdict } from "@pawlr/protocol";
 import type { ChatTransport, VerifierDeps } from "@pawlr/verifier";
 import {
   Ledger,
@@ -86,7 +86,12 @@ export class SessionManager {
     if (!Number.isInteger(ticks) || ticks < 1 || ticks > MAX_TICKS) throw new UserError(`ticks must be 1 to ${MAX_TICKS}`);
     if (failure && (!FAILURE_MODES.includes(failure.mode) || !Number.isInteger(failure.fromTick) || failure.fromTick < 1)) throw new UserError("bad simulated failure");
     const seller = await this.sellerInfo();
-    const conditions = buildConditions(seller, sections, { maxTicks: ticks, maxSpend: this.deps.limits.maxSpend, sessionId: `pawlr-${randomUUID().slice(0, 12)}` });
+    // The agreed cap is exactly ticks × price (never above the console's overall MAX_SPEND).
+    const d = requireAsset(seller.network, seller.assetAddress).decimals;
+    const perSession = BigInt(ticks) * toBaseUnits(seller.pricePerTick, d);
+    const cap = perSession < toBaseUnits(this.deps.limits.maxSpend, d) ? perSession : toBaseUnits(this.deps.limits.maxSpend, d);
+    const capText = (() => { const t = cap.toString().padStart(d + 1, "0"); const w = t.slice(0, -d) || "0"; const fr = t.slice(-d).replace(/0+$/, ""); return fr ? `${w}.${fr}` : w; })();
+    const conditions = buildConditions(seller, sections, { maxTicks: ticks, maxSpend: capText, sessionId: `pawlr-${randomUUID().slice(0, 12)}` });
     const s: ConsoleSession = {
       id: conditions.sessionId,
       createdAt: new Date().toISOString(),

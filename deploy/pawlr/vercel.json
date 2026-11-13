@@ -2,6 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/dashboard",
+      "destination": "https://console.16-61-50-207.sslip.io/console"
+    },
+    {
       "source": "/console",
       "destination": "https://console.16-61-50-207.sslip.io/console"
     },
@@ -21,7 +25,12 @@
   "headers": [
     {
       "source": "/:path*",
-      "headers": [{ "key": "x-vercel-enable-rewrite-caching", "value": "0" }]
+      "headers": [
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "0"
+        }
+      ]
     }
   ]
 }
