@@ -10,6 +10,7 @@ export interface ConsoleInfo {
   sellerUrl: string;
   payerLabel: string;
   settlement: string;
+  assetSymbol: string;
   explorer: string;
 }
 

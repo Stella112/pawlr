@@ -185,13 +185,12 @@ function checkRow(name, c) {
 }
 function settlementHtml(tx) {
   if (!tx) return "<code>none</code>";
-  if (tx.startsWith("SIMULATED-")) return `<code>${esc(tx)}</code> <span class="chip warn">simulated</span>`;
   return `<a href="${info.explorer}${esc(tx)}" target="_blank" rel="noopener"><code>${esc(tx.slice(0, 14))}…</code></a>`;
 }
 
 async function init() {
   info = await api("/info");
-  // Claim "on-chain" only when the seller explicitly says so; anything else is shown as simulated/unknown.
+  // Claim "on-chain" only when the seller explicitly says so.
   const onChain = /^on-chain/.test(info.settlement);
   const settleText = onChain ? "on-chain (Kite testnet)" : "unknown";
   $("chips").innerHTML = `<span class="chip">Kite testnet</span><span class="chip ${onChain ? "ok" : "warn"}">Settlement: ${settleText}</span><span class="chip">Judge: SERV Reasoning</span>`;
@@ -199,7 +198,7 @@ async function init() {
   for (let i = 1; i <= info.maxTicks; i++) $("ticks").add(new Option(i, i, i === 5, i === 5));
   for (let i = 1; i <= info.maxTicks; i++) $("failFrom").add(new Option(i, i, i === 3, i === 3));
   info.failureModes.forEach((m) => $("failMode").add(new Option(m, m, m === "injection", m === "injection")));
-  $("priceInfo").textContent = `Price ${info.seller.pricePerTick} pieUSD per tick, paid to ${info.seller.payTo.slice(0, 8)}…${info.seller.payTo.slice(-4)}`;
+  $("priceInfo").textContent = `Price ${info.seller.pricePerTick} ${info.assetSymbol} per tick, paid to ${info.seller.payTo.slice(0, 8)}…${info.seller.payTo.slice(-4)}`;
   $("payerLabel").textContent = info.payerLabel;
   $("settleLabel").textContent = info.settlement;
 }
@@ -257,7 +256,7 @@ function render() {
   }).join("");
   const paid = s.ticks.length, cost = s.ticks.reduce((a, t) => a + (t.verdict.cost?.servUsd || 0), 0);
   $("sPaid").textContent = `${paid} / ${max}`;
-  $("sSpent").textContent = `${(paid * price).toFixed(3)} pieUSD`;
+  $("sSpent").textContent = `${(paid * price).toFixed(3)} ${info.assetSymbol}`;
   $("sCost").textContent = `$${cost.toFixed(4)}`;
 
   $("ticksList").innerHTML = s.ticks.slice().reverse().map((t) => {
@@ -269,7 +268,7 @@ function render() {
       ${out}${quoteNote}
       <div class="small"><b>Reason:</b> ${esc(v.reason)}</div>
       <div class="checks">${checkRow("Presence", ck.presence)}${checkRow("Integrity", ck.integrity)}${checkRow("Completion", ck.completion)}${checkRow("PromptGuard", ck.guard)}${checkRow("Screen", ck.screen)}${checkRow("Relevance", ck.relevance)}${checkRow("Quote", ck.quote)}${checkRow("Shadow Agent", ck.shadow)}</div>
-      <div class="meta"><span>Paid <code>${esc(v.payment.amount)} pieUSD</code></span><span>Settlement ${settlementHtml(v.payment.txHash)}</span><span>SERV <code>${v.cost?.servUsd ? "$" + v.cost.servUsd.toFixed(5) : "–"}</code></span><span>Latency <code>${v.latencyMs} ms</code></span><span>Prompt <code>${esc(v.promptVersion || "–")}</code></span></div>
+      <div class="meta"><span>Paid <code>${esc(v.payment.amount)} ${info.assetSymbol}</code></span><span>Settlement ${settlementHtml(v.payment.txHash)}</span><span>SERV <code>${v.cost?.servUsd ? "$" + v.cost.servUsd.toFixed(5) : "–"}</code></span><span>Latency <code>${v.latencyMs} ms</code></span><span>Prompt <code>${esc(v.promptVersion || "–")}</code></span></div>
     </div>`;
   }).join("") + (s.status !== "running" && s.ticks.length < max ? `<p class="small muted">Ticks ${s.ticks.length + 1}–${max}: <b>never paid.</b></p>` : "");
 
@@ -285,8 +284,8 @@ function render() {
     $("rPaid").textContent = r.ticksPaid;
     $("rFail").textContent = r.ticksRefused;
     $("rRev").textContent = r.ticksInReview;
-    $("rTotal").textContent = `${r.totalPaid} pieUSD`;
-    $("rMaxLoss").textContent = `Maximum possible loss: 1 tick (${r.maxLossBound} pieUSD)`;
+    $("rTotal").textContent = `${r.totalPaid} ${info.assetSymbol}`;
+    $("rMaxLoss").textContent = `Maximum possible loss: 1 tick (${r.maxLossBound} ${info.assetSymbol})`;
     $("rStopped").textContent = `Stopped: ${r.stoppedBecause || ""}`;
     $("recoverCard").classList.remove("hidden");
     if (!$("claimTicks").dataset.done) {
@@ -296,7 +295,7 @@ function render() {
   }
   if (s.refund) {
     $("refundOut").classList.remove("hidden");
-    $("refundOut").innerHTML = `<b>Refund requested.</b> Money is not returned automatically.<br><span class="small muted">Request id <code>${esc(s.refund.requestId)}</code> for ${esc(s.refund.amountOwed)} pieUSD (ticks ${s.refund.ticks.join(", ")}), received by the seller at ${esc(s.refund.receivedAt)}.</span>`;
+    $("refundOut").innerHTML = `<b>Refund requested.</b> Money is not returned automatically.<br><span class="small muted">Request id <code>${esc(s.refund.requestId)}</code> for ${esc(s.refund.amountOwed)} ${info.assetSymbol} (ticks ${s.refund.ticks.join(", ")}), received by the seller at ${esc(s.refund.receivedAt)}.</span>`;
   }
 }
 

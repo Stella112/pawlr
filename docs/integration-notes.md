@@ -168,6 +168,20 @@ Maris could not fund mainnet and Kite had not allowlisted the host, so no route 
 
 Workaround: `SETTLEMENT_MODE=simulated` on the seller (`apps/seller/src/simulatedFacilitator.ts`). The buyer signs a real EIP-3009 TransferWithAuthorization with the official x402 client; the seller verifies the EIP-712 signature (viem `verifyTypedData`), payee, amount, asset, network, time window and one-time nonce; no transaction is broadcast and settlement ids start with `SIMULATED-`. Testnet only (mainnet refuses it). Labelled in /health, the landing page and CLI output.
 
+## 3d. Real on-chain settlement on Kite testnet (2026-11-13; replaces the simulated mode, which was removed)
+
+| Item | Status | Evidence |
+|---|---|---|
+| Kite testnet gas price 10 gwei (`eth_gasPrice` 0x2541b2640), chain id 2368 | CAPTURED | RPC https://rpc-testnet.gokite.ai |
+| Official facilitator code: `x402Facilitator` (`@x402/core/facilitator`) `.register(network, new ExactEvmScheme(signer))` (`@x402/evm/exact/facilitator`); signer via `toFacilitatorEvmSigner({address, readContract, verifyTypedData, writeContract, sendTransaction, waitForTransactionReceipt, getCode})` (`@x402/evm`) | SRC | `signer-okf_34IN.d.mts`, `facilitator/index.d.mts` |
+| Token functions the facilitator calls: `transferWithAuthorization(...,v,r,s)` (ECDSA path) or `(..., bytes)`, `authorizationState`, `name`, `version`, `balanceOf`; settlement is confirmed by the ERC-20 `Transfer` event | SRC | `@x402/evm/dist/esm/chunk-7TZ3NXXP.mjs` |
+| Pawlr Test USD deployed: `0x00896b48a72646391502c034d7147ab13414c966`, tx `0x31da44737d4288dc5b4404efac8de79898c7bee3e846f37c440160c6a074bd08` (gas 781,733); on-chain name "Pawlr Test USD", version "1", decimals 6 | CAPTURED | `scripts/deploy-token.mjs` output |
+| Local proof first: anvil (chain id 2368), deploy + mint + 4 paid ticks → 4 successful txs, balances moved exactly | TEST | `packages/buyer/test/onchain.anvil.test.ts` |
+| Live: run A 5 ticks, run B 3 ticks (fail at 3) → 8 successful txs; buyer 9.992 pUSD, seller 0.008 pUSD; Blockscout shows "pUSD 0.001 from 0xEB27… to 0x8033…" | CAPTURED | `cast receipt`, `cast call balanceOf`, Blockscout `/api/v2/transactions/…/token-transfers` |
+| Explorer tx link format `https://testnet.kitescan.ai/tx/<hash>` | CAPTURED | links resolve for the txs above |
+
+Scope note: a new contract and token were out of scope in agent.md §15; Maris overrode this on 2026-11-13 ("i don't want simulations"), choosing real testnet settlement with Pawlr's own test token.
+
 ## 4. Dolphin
 
 **OPEN.** Base URL, auth, request format and model ID needed from Maris.

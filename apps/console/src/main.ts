@@ -33,11 +33,12 @@ const mgr = new SessionManager({
 
 await mgr.sellerInfo();
 // Read the seller's own settlement label (fetchSellerInfo keeps only payment fields).
-const health = (await (await fetch(`${sellerUrl}/health`)).json()) as { settlement?: string };
+const health = (await (await fetch(`${sellerUrl}/health`)).json()) as { settlement?: string; asset?: string };
 const app = createConsoleApp(mgr, {
   sellerUrl,
   payerLabel: payerKind === "kpass" ? "Kite Passport (kpass)" : "Direct x402 wallet (EIP-3009 signatures)",
   settlement: String(health.settlement ?? "unknown"),
+  assetSymbol: String(health.asset ?? "token"),
   explorer: "https://testnet.kitescan.ai/tx/",
 });
 const port = Number(env("CONSOLE_PORT", "8820"));

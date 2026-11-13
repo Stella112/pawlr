@@ -63,7 +63,7 @@ export function landingPage(config: SellerConfig, version: string): string {
     </dl>
   </div>
 
-  <p class="foot">Built for the OpenServ SERV Hackathon, Kite track. Payments: x402 on Kite. Judging: SERV Reasoning.</p>
+  <p class="foot">Built for the OpenServ SERV Hackathon, Kite track. Payments: x402 on Kite testnet, settled on-chain. Judging: SERV Reasoning.</p>
 </main>
 </body>
 </html>`;
