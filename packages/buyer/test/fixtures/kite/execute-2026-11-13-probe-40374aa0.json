@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-11-13T12:00:18.247Z",
+  "source": "live kpass 6.13.2 session execute (sandbox)",
+  "url": "https://pawlr.16-61-50-207.sslip.io/tick/probe-40374aa0/1",
+  "idempotencyKey": "pawlr-probe-40374aa0-1",
+  "latencyMs": 1616,
+  "output": {
+    "_version": "1",
+    "details": {
+      "next_command": "ksearch service list",
+      "reason": "host_not_in_executable_catalog",
+      "recovery": "Only hosts returned by `ksearch service list` are executable by default. Use the catalog endpoint, or ask Kite to approve the host or whitelist your account for partner testing.",
+      "requested_host": "pawlr.16-61-50-207.sslip.io",
+      "requested_url": "https://pawlr.16-61-50-207.sslip.io/tick/probe-40374aa0/1"
+    },
+    "error": "request URL host is not allowlisted for paid execution (url=\"https://pawlr.16-61-50-207.sslip.io/tick/probe-40374aa0/1\", host=\"pawlr.16-61-50-207.sslip.io\", reason=\"host_not_in_executable_catalog\")",
+    "error_code": "payment_target_forbidden",
+    "hint": "This host is not in Kite's executable service catalog for your account. Run `ksearch service list` to find payable endpoints, or ask Kite for partner/tester allowlisting.",
+    "next_command": "",
+    "status": "error"
+  }
+}

@@ -110,8 +110,23 @@ Installed 2026-11-12 with Kite's Windows installer (`https://cli.gokite.ai/insta
 | Where the tx hash appears for the payer | **OPEN** | Template README: `execute` "prints HTTP 200, the upstream body and the settlement transaction hash". Field name: capture live |
 | Current state on this machine: backend reachable (`https://passport.prod.gokite.ai`, status ok), **not logged in**, no agent registered, no session | CAPTURED | `kpass status --output json`, 2026-11-12 |
 
-### Captured (Phase 1b)
-_Empty. Needs Maris to log in, turn sandbox on, register an agent, fund with faucet pieUSD, and approve a session._
+### Captured (Phase 1b, 2026-11-13)
+
+| Step | Result |
+|---|---|
+| `kpass sandbox on` → `kpass sandbox status` | `"mode": "sandbox"`. But `kpass health` still reports `"backend_env": "prod"`, `backend_url: https://passport.prod.gokite.ai` |
+| `kpass agent register --type service-tester` | success, `agent_id: agent_01a1d4bd-…`, type `service-tester` |
+| `kpass wallet address` | one EVM address on all chains incl. `kite`: `0xA1A2cce9819BC795144aDB6C0afeF839E345bBA1` (Maris's Passport wallet) |
+| `kpass wallet balance` | assets USDC / PYUSD / USDG only (mainnet set), all 0. No PIEUSD row |
+| `kpass faucet drop --recipient … --token pieUSD` | **error:** `"Faucet is only available on staging/testnet environments. It is disabled on production."` The bundled skill confirms: "the CLI blocks production base URLs automatically". Web faucet https://faucet.gokite.ai offers only KITE and USDT (not pieUSD) |
+| `kpass session create --separate --preview …` | Delegation shape: `{"payment_policy":{"assets":["PIEUSD"],"max_amount_per_tx":"0.001","max_total_amount":"0.01","ttl_seconds":10800},"task":{"summary":"…"}}`. **No payee/endpoint field**, so payee is enforced in Pawlr's buyer |
+| `kpass session create --separate --no-browser …` | `status: "human_action_required"`, `approval_url: https://agentpassport.ai/agent-session/approve?token=…` (expires in 10 min), `request_id`, `wait_command` |
+| `kpass session status --request-id … --wait` | after passkey approval: `session.status: "active"`, `current_session_id`, `expires_at`, `usage: {reserved_total, spent_total, …}` |
+| `kpass session execute --url https://pawlr.16-61-50-207.sslip.io/tick/<id>/1 --method GET --headers '{"pawlr-conditions-hash":…}' --idempotency-key … --no-interactive --output json` | **Refused before paying, exit code 6** (not in the documented 0–5 list): `"error_code": "payment_target_forbidden"`, `details.reason: "host_not_in_executable_catalog"`, `"recovery": "Only hosts returned by \`ksearch service list\` are executable by default. Use the catalog endpoint, or ask Kite to approve the host or whitelist your account for partner testing."` Saved: `packages/buyer/test/fixtures/kite/execute-2026-11-13-probe-40374aa0.json` |
+
+**Blocker (escalated to Maris 2026-11-13):** Passport pays only catalog hosts or hosts Kite allowlists for an account, and the sandbox wallet has no PIEUSD source on the prod backend. Kite's catalog flow (`kite-x402-services/CONTRIBUTING.md`) asks for one call paid "with a sandbox agent" before a service moves to `testnet`, which needs the allowlisting first.
+
+Explorer tx link pattern: Kite's faucet page links `https://testnet.kitescan.ai/tx/<hash>` (seen 2026-11-13, href `https://testnet.kitescan.ai/tx/null` before a request).
 
 ---
 
