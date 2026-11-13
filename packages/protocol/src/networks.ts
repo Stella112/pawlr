@@ -92,6 +92,21 @@ const ASSETS: AssetInfo[] = [KITE_MAINNET, KITE_TESTNET].map((c) => ({
   eip712Version: c.eip712Version,
 }));
 
+/**
+ * Pawlr Test USD (pUSD): Pawlr's own TESTNET-ONLY EIP-3009 token on Kite testnet,
+ * deployed 2026-11-13 (tx 0x31da4473…bd08) from contracts/src/PawlrTestUSD.sol.
+ * Exists because pieUSD has no public source. Worthless; for the demo only.
+ */
+export const PAWLR_TEST_USD: AssetInfo = {
+  network: "eip155:2368",
+  address: "0x00896b48a72646391502c034d7147ab13414c966",
+  symbol: "pUSD",
+  decimals: 6,
+  eip712Name: "Pawlr Test USD",
+  eip712Version: "1",
+};
+ASSETS.push(PAWLR_TEST_USD);
+
 /** Adds a token to the registry (for example Pawlr Test USD, or a token deployed in a test). */
 export function registerAsset(a: AssetInfo): AssetInfo {
   if (!assetInfo(a.network, a.address)) ASSETS.push(a);
