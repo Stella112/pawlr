@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { hashConditions, requireAsset, toBaseUnits, type DeliveryConditions, type Receipt, type TickEvidence, type TickVerdict } from "@pawlr/protocol";
-import type { ChatTransport, VerifierDeps } from "@pawlr/verifier";
+import { applyDispute, runDispute, type ChatTransport, type CostEntry, type ReppoClient, type VerifierDeps } from "@pawlr/verifier";
 import {
   Ledger,
   agreeSession,
@@ -16,7 +16,7 @@ import {
   type SpendLimits,
 } from "@pawlr/buyer";
 
-export type Status = "draft" | "running" | "paused" | "review" | "done" | "stopped" | "error";
+export type Status = "draft" | "running" | "paused" | "review" | "disputing" | "done" | "stopped" | "error";
 
 export interface TickView {
   tick: number;
@@ -38,6 +38,8 @@ export interface ConsoleSession {
   receipt?: Receipt & { stoppedBecause?: string };
   stoppedBecause?: string;
   refund?: { requestId: string; receivedAt: string; note: string; amountOwed: string; ticks: number[] };
+  /** Reppo disputes, by tick: the eval id and the mapped outcome. */
+  disputes?: Record<number, { state: "waiting" | "done"; evalId?: string | null; route?: string | null; score?: number | null; verdict?: string; reason?: string }>;
   error?: string;
 }
 
@@ -52,6 +54,9 @@ export interface ManagerDeps {
   adminPassword: string;
   fetch?: typeof fetch;
   maxStartsPerHour?: number;
+  /** Reppo Eval Router client; disputes are offered only when it is configured. */
+  reppo?: ReppoClient;
+  onCost?: (c: CostEntry) => void;
 }
 
 export const FAILURE_MODES = ["junk", "off-topic", "stale", "empty", "injection", "subtle"];
@@ -181,6 +186,48 @@ export class SessionManager {
     s.log.push(`tick ${tick}: ${decision}d by a human reviewer`);
     if (decision === "approve") void this.run(s);
     else s.status = "paused";
+    return s;
+  }
+
+  /**
+   * Dispute a failed or unclear tick: Reppo gives an independent verdict (agent.md §9 step 10).
+   * Sends the conditions, the buyer's section text, the served evidence, anything the seller added
+   * and Pawlr's ruling. Only a Reppo "ship" (mapped to pass) resumes the meter. Needs the admin
+   * password, because each dispute spends Reppo credits.
+   */
+  async dispute(id: string, tick: number, password: string) {
+    if (!this.deps.reppo) throw new UserError("Reppo is not configured on this console");
+    if (!password || password !== this.deps.adminPassword) throw new UserError("wrong admin password");
+    const s = this.sessions.get(id);
+    if (!s || (s.status !== "paused" && s.status !== "review")) throw new UserError("only a paused or in-review session can be disputed");
+    const t = s.ticks.find((x) => x.tick === tick);
+    if (!t || t.verdict.verdict === "pass") throw new UserError("only a failed or unclear tick can be disputed");
+    if (s.ticks.some((x) => x.tick > tick)) throw new UserError("only the tick that stopped the session can be disputed");
+    const seller = await this.sellerInfo();
+    const r = await this.f()(`${seller.baseUrl}/sessions/${encodeURIComponent(id)}/evidence/${tick}`);
+    if (!r.ok) throw new Error(`could not read the tick's evidence from the seller (${r.status})`);
+    const served = (await r.json()) as { evidence: TickEvidence; added?: { note: string }[] };
+    const section = s.sections.find((x) => x.name === served.evidence.sectionName);
+    if (!section) throw new UserError(`no buyer text for section "${served.evidence.sectionName}"`);
+
+    s.status = "disputing";
+    s.disputes = { ...(s.disputes ?? {}), [tick]: { state: "waiting" } };
+    s.log.push(`tick ${tick}: sent to Reppo for an independent verdict`);
+    void (async () => {
+      const o = await runDispute(
+        { conditions: s.conditions, sectionText: section.text, evidence: served.evidence, sellerAdded: served.added, pawlrVerdict: t.verdict },
+        this.deps.reppo!,
+      );
+      this.deps.onCost?.({ at: new Date().toISOString(), provider: "reppo", purpose: "dispute", model: "reppo-eval-router", latencyMs: o.latencyMs, usd: null, credits: o.credits, status: null, requestId: o.evalId ?? undefined });
+      const decided = applyDispute(t.verdict, o);
+      new Ledger(this.deps.dataDir, s.id, s.conditionsHash).update(tick, { verdict: decided });
+      t.verdict = decided;
+      if (s.receipt) s.receipt = { ...s.receipt, ticks: s.receipt.ticks.map((v) => (v.tick === tick ? decided : v)) };
+      s.disputes![tick] = { state: "done", evalId: o.evalId, route: o.route, score: o.score, verdict: o.verdict, reason: o.reason };
+      s.log.push(`tick ${tick}: Reppo ${o.evalId ? `eval ${o.evalId} ` : ""}route ${o.route ?? "none"} -> ${o.verdict}`);
+      if (o.verdict === "pass") void this.run(s);
+      else s.status = o.verdict === "fail" ? "paused" : "review";
+    })();
     return s;
   }
 

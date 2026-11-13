@@ -12,6 +12,8 @@ export interface ConsoleInfo {
   settlement: string;
   assetSymbol: string;
   explorer: string;
+  reppo: boolean;
+  dolphin: string | null;
 }
 
 /** Public view of a session. Never includes secrets. */
@@ -27,6 +29,7 @@ function view(s: ConsoleSession) {
     receipt: s.receipt ?? null,
     stoppedBecause: s.stoppedBecause ?? null,
     refund: s.refund ?? null,
+    disputes: s.disputes ?? {},
     error: s.error ?? null,
   };
 }
@@ -60,6 +63,10 @@ export function createConsoleApp(mgr: SessionManager, info: ConsoleInfo) {
   app.post("/api/sessions/:id/review", async (c) => {
     const b = await c.req.json<{ tick: number; decision: "approve" | "reject"; password: string }>();
     return c.json(view(await mgr.review(c.req.param("id"), Number(b.tick), b.decision, String(b.password ?? ""))));
+  });
+  app.post("/api/sessions/:id/dispute", async (c) => {
+    const b = await c.req.json<{ tick: number; password: string }>();
+    return c.json(view(await mgr.dispute(c.req.param("id"), Number(b.tick), String(b.password ?? ""))));
   });
   app.post("/api/sessions/:id/claim", async (c) => {
     const b = await c.req.json<{ ticks: number[] }>();

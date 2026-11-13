@@ -182,6 +182,13 @@ input[type=password]{font:inherit;color:inherit;background:var(--bg);border:1px 
         <div class="actions"><input type="password" id="rvPw" placeholder="Admin password" autocomplete="off"><button class="btn" id="rvApprove">It's fine, continue</button><button class="btn warn" id="rvReject">It's bad, stop</button></div>
         <span class="err" id="rvErr"></span>
       </div>
+      <div id="disputeBox" class="hidden statuscard st-warn" style="display:block">
+        <h3>Disagree with tick <span id="dpTick"></span>? Ask Reppo</h3>
+        <p>Reppo's panel of independent evaluators reads the agreed rule, the section, what the seller delivered and anything the seller added, then gives its own verdict. Only an independent "ship" resumes payments. Takes about a minute. (Admin only; Reppo submissions are visible on Reppo's public feed.)</p>
+        <div class="actions"><input type="password" id="dpPw" placeholder="Admin password" autocomplete="off"><button class="btn sec" id="dpBtn">Send to Reppo</button></div>
+        <span class="err" id="dpErr"></span>
+      </div>
+      <div id="disputeOut" class="hidden statuscard" style="display:block"></div>
       <div id="tickList"></div>
       <details class="tech"><summary>Session log</summary><pre id="log"></pre></details>
     </div>
@@ -229,7 +236,8 @@ const CHECKS = [
   ["integrity", "Untampered"],
   ["completion", "Complete enough"],
   ["guard", "No injection flagged"],
-  ["screen", "Quick screen"],
+  ["screen", "Quick screen (Dolphin)"],
+  ["dispute", "Independent verdict (Reppo)"],
   ["relevance", "On topic (AI judge)"],
   ["quote", "Evidence quoted"],
   ["shadow", "Second opinion"],
@@ -304,7 +312,7 @@ $("startBtn").onclick = async () => {
 
 async function refresh() {
   try { session = await api(`/sessions/${session.id}`); render(); } catch {}
-  if (!["running", "draft"].includes(session.status)) { clearInterval(poll); poll = null; }
+  if (!["running", "draft", "disputing"].includes(session.status)) { clearInterval(poll); poll = null; }
 }
 
 function highlight(output, quote) {
@@ -323,6 +331,7 @@ function status(s) {
     case "done": return ["st-ok", "✓", "All ticks delivered well", `Every one of the ${n} ticks passed its checks and was paid.`];
     case "paused": return ["st-bad", "✗", `Stopped at tick ${lastBad?.tick}: payments halted`, `${lastBad ? lastBad.verdict.reason : ""} Nothing more will be paid.`];
     case "review": return ["st-warn", "?", `Paused at tick ${rv?.tick}: needs a person`, "The AI judge wasn't sure. Nothing more is paid until someone decides."];
+    case "disputing": return ["st-warn", '<span class="spin">⟳</span>', `Tick ${Object.keys(s.disputes || {}).pop()} is with Reppo`, "Reppo's independent evaluators are judging it. Nothing more is paid meanwhile."];
     case "error": return ["st-bad", "!", "Something went wrong", s.error || ""];
     default: return ["st-warn", "■", "Stopped", s.stoppedBecause || ""];
   }
@@ -372,6 +381,13 @@ function render() {
   const rv = s.status === "review" ? s.ticks.find((t) => t.verdict.verdict === "unsure") : null;
   $("reviewBox").classList.toggle("hidden", !rv);
   if (rv) $("rvTick").textContent = rv.tick;
+  const stopper = ["paused", "review"].includes(s.status) ? s.ticks[s.ticks.length - 1] : null;
+  const canDispute = info.reppo && stopper && stopper.verdict.verdict !== "pass" && !(s.disputes || {})[stopper.tick];
+  $("disputeBox").classList.toggle("hidden", !canDispute);
+  if (canDispute) $("dpTick").textContent = stopper.tick;
+  const ds = Object.entries(s.disputes || {}).filter(([, d]) => d.state === "done");
+  $("disputeOut").classList.toggle("hidden", !ds.length);
+  $("disputeOut").innerHTML = ds.map(([tick, d]) => `<div><h3>Reppo on tick ${esc(tick)}: ${esc(d.route || "no answer")} → ${esc({ pass: "pass, payments resume", fail: "fail, payments stay stopped", unsure: "still unclear, stays in review" }[d.verdict] || d.verdict)}</h3><p>${esc(d.reason || "")}</p><p class="help">Score ${esc(String(d.score ?? "-"))} / 100 · eval <span class="mono">${esc(d.evalId || "-")}</span></p></div>`).join("");
   $("log").textContent = s.log.join("\n");
 
   if (s.receipt) {
@@ -400,6 +416,11 @@ async function decide(decision) {
   catch (e) { $("rvErr").textContent = e.message; }
 }
 $("rvApprove").onclick = () => decide("approve");
+$("dpBtn").onclick = async () => {
+  $("dpErr").textContent = "";
+  try { session = await api(`/sessions/${session.id}/dispute`, { tick: Number($("dpTick").textContent), password: $("dpPw").value }); render(); if (!poll) poll = setInterval(refresh, 1500); }
+  catch (e) { $("dpErr").textContent = e.message; }
+};
 $("rvReject").onclick = () => decide("reject");
 $("newBtn").onclick = () => location.reload();
 $("dlBtn").onclick = () => {

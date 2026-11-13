@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // pawlr run --doc file.md --ticks 8 --network testnet [--payer kpass|wallet] [--seller URL] [--data DIR]
-// Needs SERV_API_KEY in the environment (node --env-file=.env ...).
+// Needs SERV_API_KEY in the environment (node --env-file=.env ...). DOLPHIN_API_KEY adds the Dolphin screen;
+// --mode economy lets a clean Dolphin pass (with a code-checked quote) settle a tick without SERV.
 // --payer kpass (default): Kite Passport. --payer wallet: backup route, direct x402 from BUYER_PRIVATE_KEY.
 import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { servTransport } from "@pawlr/verifier";
+import { dolphinScreen, dolphinTransport, servTransport } from "@pawlr/verifier";
 import { parseDocument } from "./document.js";
 import { KpassPayer, type Payer } from "./payer.js";
 import { WalletPayer } from "./walletPayer.js";
@@ -26,6 +27,7 @@ async function main() {
       "session-id": { type: "string" },
       payer: { type: "string", default: "kpass" },
       "simulate-failure": { type: "string" },
+      mode: { type: "string", default: "demo" },
     },
   });
   if (positionals[0] !== "run" || !values.doc) {
@@ -81,7 +83,18 @@ async function main() {
     {
       payer,
       dataDir,
-      verifier: { serv: servTransport(process.env.SERV_API_KEY ?? ""), onCost: (c) => appendFileSync(join(dataDir, "costs.jsonl"), JSON.stringify(c) + "\n") },
+      verifier: {
+        serv: servTransport(process.env.SERV_API_KEY ?? ""),
+        // Dolphin screen when DOLPHIN_API_KEY is set. --mode economy lets a clean Dolphin pass settle a tick.
+        screen: process.env.DOLPHIN_API_KEY?.trim()
+          ? dolphinScreen({
+              transport: dolphinTransport(process.env.DOLPHIN_API_KEY.trim(), process.env.DOLPHIN_BASE_URL?.trim() || undefined),
+              model: process.env.DOLPHIN_MODEL?.trim() || undefined,
+            })
+          : undefined,
+        mode: values.mode === "economy" ? "economy" : "demo",
+        onCost: (c) => appendFileSync(join(dataDir, "costs.jsonl"), JSON.stringify(c) + "\n"),
+      },
     },
     {
       log: (l) => console.log(l),
