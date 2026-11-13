@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/console",
+      "destination": "https://console.16-61-50-207.sslip.io/console"
+    },
+    {
+      "source": "/console/:path*",
+      "destination": "https://console.16-61-50-207.sslip.io/console/:path*"
+    },
+    {
       "source": "/",
       "destination": "https://pawlr.16-61-50-207.sslip.io/"
     },

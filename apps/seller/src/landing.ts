@@ -37,6 +37,8 @@ export function landingPage(config: SellerConfig, version: string): string {
   <p class="tag">The catch that stops paying the moment delivery fails.</p>
   <p>Pawlr pays a service one tick at a time, checks each delivery against conditions both sides agreed, and stops paying the moment delivery fails. The most a buyer can lose is one tick.</p>
 
+  <p><a href="/console" style="display:inline-block;background:var(--accent);color:var(--card);padding:10px 18px;border-radius:10px;font-weight:600;text-decoration:none">Open the console and run a session</a></p>
+
   <div class="card">
     <h2>How a tick works</h2>
     <ol>

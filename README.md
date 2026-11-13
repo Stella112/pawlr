@@ -5,6 +5,7 @@
 Pawlr pays a service one tick at a time, checks each delivery against conditions both sides agreed, and stops paying the moment delivery fails. **The most you can lose is one tick.**
 
 - Live seller: **https://pawlr.vercel.app** (Kite testnet, `eip155:2368`)
+- Live console: **https://pawlr.vercel.app/console** (run a session, stage a failure, see the receipt, send a Recover claim)
 - Built for the OpenServ SERV Hackathon Edition 02, **Kite track**. Judging: **SERV Reasoning**.
 
 > **Read this first: what is real and what is simulated.** Every part of Pawlr runs live (seller, verifier, SERV rulings, buyer loop, payment signing) **except on-chain settlement**, which is **SIMULATED** on this deployment. Kite Passport refused to pay hosts outside Kite's service catalog, and we had no way to get the testnet token (pieUSD) or fund mainnet. Details in [Why settlement is simulated](#why-settlement-is-simulated). Failures in the demo are staged with a failure switch and labelled as such.
@@ -71,7 +72,9 @@ SERV cost: 13 verifier rulings ≈ **$0.015** (from `usage` × model price). Pro
 | Kite Passport payments (`kpass session execute`) | **Built, blocked by Kite** | session created and approved with a passkey; payment refused: `payment_target_forbidden` / `host_not_in_executable_catalog` |
 | Staged failures (junk, off-topic, stale, empty, injection, subtle) | **Simulated failures** (by design) | password-protected switch; truth log records what was served |
 | Refund inbox (Recover target) | **Live route** | `POST /sessions/:id/refund-requests` |
-| Console UI, Recover claim generation | **Not built yet** | |
+| Console UI: conditions + hash, live meter, PAUSED / IN REVIEW, receipt download | **Live** | https://pawlr.vercel.app/console |
+| Recover: SERV drafts the claim (`pawlr_claim`), code re-checks the amount, sent to the seller's refund inbox | **Live** | console step 5; seller returns a request id. Money is not returned automatically |
+| Human review of unclear ticks (approve / reject, admin password) | **Live code, not triggered live** | SERV gave no "unsure" in our runs |
 | Dolphin screen | **Not built** (slot exists) | API details not available |
 | Reppo disputes | **Not built** | API details not available |
 | Benchmark | **Not built yet** | |
