@@ -58,7 +58,7 @@ export class Ledger {
   /** The one place a tick moves to "paying". Throws if the tick already has an entry. */
   beginPayment(tick: number, url: string): LedgerEntry {
     if (this.get(tick)) throw new Error(`tick ${tick} already has a ledger entry; refusing to start a second payment`);
-    const entry: LedgerEntry = { tick, state: "paying", key: `pawlr-${this.data.sessionId}-${tick}`, url, startedAt: new Date().toISOString() };
+    const entry: LedgerEntry = { tick, state: "paying", key: `${this.data.sessionId}-t${tick}`, url, startedAt: new Date().toISOString() };
     this.data.ticks[String(tick)] = entry;
     this.flush();
     return entry;
