@@ -1,7 +1,7 @@
 import { decodePaymentResponseHeader, wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { privateKeyToAccount } from "viem/accounts";
-import { kiteChainByNetwork, toBaseUnits, type DeliveryConditions } from "@pawlr/protocol";
+import { requireAsset, toBaseUnits, type DeliveryConditions } from "@pawlr/protocol";
 import type { Payer, PayRequest, PayResult } from "./payer.js";
 
 /**
@@ -25,9 +25,7 @@ export class WalletPayer implements Payer {
     const account = privateKeyToAccount(opts.privateKey as `0x${string}`);
     this.address = account.address;
     const c = opts.conditions;
-    const chain = kiteChainByNetwork(c.network);
-    if (!chain) throw new Error(`unknown network ${c.network}`);
-    const maxUnits = toBaseUnits(c.pricePerTick, chain.assetDecimals);
+    const maxUnits = toBaseUnits(c.pricePerTick, requireAsset(c.network, c.asset).decimals);
 
     const client = new x402Client()
       .register(c.network, new ExactEvmScheme(account))

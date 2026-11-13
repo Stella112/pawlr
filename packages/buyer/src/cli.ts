@@ -87,7 +87,7 @@ async function main() {
       log: (l) => console.log(l),
       onTick: (v) =>
         v.payment.txHash &&
-        console.log(v.payment.txHash.startsWith("SIMULATED-") ? `  settlement: ${v.payment.txHash} (SIMULATED: signed authorization verified, no on-chain tx)` : `  tx: ${EXPLORER[network]}${v.payment.txHash}`),
+        console.log(`  tx: ${EXPLORER[network]}${v.payment.txHash}`),
     },
   );
   console.log(`\nStopped: ${stoppedBecause}`);

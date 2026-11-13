@@ -1,4 +1,4 @@
-import { kiteChainByNetwork, toBaseUnits, type DeliveryConditions, type RefundClaim, type TickVerdict } from "@pawlr/protocol";
+import { requireAsset, toBaseUnits, type DeliveryConditions, type RefundClaim, type TickVerdict } from "@pawlr/protocol";
 import { parseResponse, usageOf, type ChatTransport } from "@pawlr/verifier";
 
 /**
@@ -47,11 +47,11 @@ export interface ClaimDraft {
 }
 
 export function amountFor(ticks: number[], conditions: DeliveryConditions): string {
-  const chain = kiteChainByNetwork(conditions.network)!;
-  const units = BigInt(ticks.length) * toBaseUnits(conditions.pricePerTick, chain.assetDecimals);
-  const s = units.toString().padStart(chain.assetDecimals + 1, "0");
-  const whole = s.slice(0, -chain.assetDecimals) || "0";
-  const frac = s.slice(-chain.assetDecimals).replace(/0+$/, "");
+  const d = requireAsset(conditions.network, conditions.asset).decimals;
+  const units = BigInt(ticks.length) * toBaseUnits(conditions.pricePerTick, d);
+  const s = units.toString().padStart(d + 1, "0");
+  const whole = s.slice(0, -d) || "0";
+  const frac = s.slice(-d).replace(/0+$/, "");
   return frac ? `${whole}.${frac}` : whole;
 }
 

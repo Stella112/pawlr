@@ -72,3 +72,45 @@ export function toBaseUnits(amount: string, decimals: number): bigint {
   if (frac.length > decimals) throw new Error(`amount ${text} has more than ${decimals} decimals`);
   return BigInt(whole + frac.padEnd(decimals, "0"));
 }
+
+/** A token Pawlr can price ticks in. */
+export interface AssetInfo {
+  network: KiteChain["network"];
+  address: string;
+  symbol: string;
+  decimals: number;
+  eip712Name: string;
+  eip712Version: string;
+}
+
+const ASSETS: AssetInfo[] = [KITE_MAINNET, KITE_TESTNET].map((c) => ({
+  network: c.network,
+  address: c.assetAddress,
+  symbol: c.assetSymbol,
+  decimals: c.assetDecimals,
+  eip712Name: c.eip712Name,
+  eip712Version: c.eip712Version,
+}));
+
+/** Adds a token to the registry (for example Pawlr Test USD, or a token deployed in a test). */
+export function registerAsset(a: AssetInfo): AssetInfo {
+  if (!assetInfo(a.network, a.address)) ASSETS.push(a);
+  return a;
+}
+
+export function assetInfo(network: string, address: string): AssetInfo | undefined {
+  return ASSETS.find((a) => a.network === network && a.address.toLowerCase() === address.toLowerCase());
+}
+
+/** Like assetInfo, but throws for a token Pawlr does not know (never guess decimals). */
+export function requireAsset(network: string, address: string): AssetInfo {
+  const a = assetInfo(network, address);
+  if (!a) throw new Error(`unknown asset ${address} on ${network}`);
+  return a;
+}
+
+/** The chain with its payment token swapped for `asset` (same network). */
+export function chainWithAsset(chain: KiteChain, asset: AssetInfo): KiteChain {
+  if (asset.network !== chain.network) throw new Error(`asset ${asset.symbol} is on ${asset.network}, not ${chain.network}`);
+  return { ...chain, assetAddress: asset.address, assetSymbol: asset.symbol, assetDecimals: asset.decimals, eip712Name: asset.eip712Name, eip712Version: asset.eip712Version };
+}

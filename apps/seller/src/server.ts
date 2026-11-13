@@ -130,7 +130,7 @@ export function createPublicApp(opts: {
       assetAddress: chain.assetAddress,
       pricePerTick: config.pricePerTick,
       payTo: config.payTo,
-      settlement: config.settlementMode === "simulated" ? "SIMULATED (signatures verified, no on-chain transfer)" : "facilitator (on-chain)",
+      settlement: config.settlementMode === "self" ? "on-chain (Pawlr facilitator: official x402 facilitator code)" : "on-chain (Pieverse facilitator)",
     }),
   );
 

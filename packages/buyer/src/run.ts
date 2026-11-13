@@ -6,7 +6,7 @@ import {
   PROTOCOL_VERSION,
   TickEvidence,
   hashConditions,
-  kiteChainByName,
+  requireAsset,
   toBaseUnits,
   type DeliveryConditions,
   type Receipt,
@@ -137,8 +137,7 @@ export async function runTicks(
   const { seller, conditions, conditionsHash, sections, limits } = input;
   const log = events.log ?? (() => {});
   const f = deps.fetch ?? fetch;
-  const chainName = conditions.network === "eip155:2366" ? "mainnet" : "testnet";
-  const decimals = kiteChainByName(chainName).assetDecimals;
+  const decimals = requireAsset(conditions.network, conditions.asset).decimals;
   const startedAt = new Date().toISOString();
   const ledger = new Ledger(deps.dataDir, conditions.sessionId, conditionsHash);
   const sectionTexts = Object.fromEntries(sections.map((s) => [s.name, s.text]));

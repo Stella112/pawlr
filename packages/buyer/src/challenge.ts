@@ -1,4 +1,4 @@
-import { CONDITIONS_HASH_HEADER, kiteChainByNetwork, toBaseUnits, type DeliveryConditions } from "@pawlr/protocol";
+import { CONDITIONS_HASH_HEADER, assetInfo, toBaseUnits, type DeliveryConditions } from "@pawlr/protocol";
 
 /** One entry of `accepts` in an x402 v2 challenge (shape captured 2026-11-12, docs/integration-notes.md §2). */
 export interface PaymentOffer {
@@ -39,9 +39,9 @@ export async function readChallenge(url: string, conditionsHash: string, fetchIm
  * this check is Pawlr's.
  */
 export function checkChallenge(offers: PaymentOffer[], conditions: DeliveryConditions): { ok: true; offer: PaymentOffer } | { ok: false; reason: string } {
-  const chain = kiteChainByNetwork(conditions.network);
-  if (!chain) return { ok: false, reason: `unknown network ${conditions.network}` };
-  const maxUnits = toBaseUnits(conditions.pricePerTick, chain.assetDecimals);
+  const asset = assetInfo(conditions.network, conditions.asset);
+  if (!asset) return { ok: false, reason: `unknown asset ${conditions.asset} on ${conditions.network}` };
+  const maxUnits = toBaseUnits(conditions.pricePerTick, asset.decimals);
   const problems: string[] = [];
   for (const o of offers) {
     const p: string[] = [];

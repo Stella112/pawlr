@@ -152,9 +152,12 @@ describe("payee and amount checks (abort without paying)", () => {
     expect(w.s.fac.calls.verify).toBe(0);
   });
 
-  it("checkChallenge accepts a cheaper amount", () => {
-    const c = { network: "eip155:2368", seller: { payTo: "0xAA" }, asset: "0xBB", pricePerTick: "0.001" } as any;
-    expect(checkChallenge([{ scheme: "exact", network: "eip155:2368", payTo: "0xaa", asset: "0xbb", amount: "999" }], c).ok).toBe(true);
+  it("checkChallenge accepts a cheaper amount and refuses an unknown token", () => {
+    const pie = "0x38129cf4CE5E183eFF248F42A7D345Bb1B47621A";
+    const c = { network: "eip155:2368", seller: { payTo: "0xAA" }, asset: pie, pricePerTick: "0.001" } as any;
+    expect(checkChallenge([{ scheme: "exact", network: "eip155:2368", payTo: "0xaa", asset: pie.toLowerCase(), amount: "999" }], c).ok).toBe(true);
+    const unknown = { ...c, asset: "0x" + "bb".repeat(20) };
+    expect(checkChallenge([{ scheme: "exact", network: "eip155:2368", payTo: "0xaa", asset: unknown.asset, amount: "1" }], unknown).ok).toBe(false);
   });
 });
 

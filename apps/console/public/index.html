@@ -105,7 +105,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px}
     <h2>Payment</h2>
     <div class="grid2 small">
       <div><b>Paying with:</b> <span id="payerLabel"></span><br><span class="muted">Each tick is a real signed x402 payment authorization (EIP-3009) for the exact price, to the agreed payee.</span></div>
-      <div><b>Settlement:</b> <span id="settleLabel"></span><br><span class="muted">No tokens move on-chain on this deployment. Settlement ids start with <code>SIMULATED-</code>.</span></div>
+      <div><b>Settlement:</b> <span id="settleLabel"></span><br><span class="muted">Each tick is a real transfer on Kite testnet; its transaction links to testnet.kitescan.ai.</span></div>
     </div>
     <details style="margin-top:10px"><summary>Kite Passport status</summary>
       <p class="small">Built and tested with the Kite Passport CLI (kpass 6.13.2): a spending session was created and approved with a passkey (0.001 per payment, 0.01 total, 3 hours). Paying this host was refused by Kite with <code>payment_target_forbidden</code> / <code>host_not_in_executable_catalog</code>: Passport only pays hosts in Kite's service catalog. Commands used:</p>
@@ -192,8 +192,8 @@ function settlementHtml(tx) {
 async function init() {
   info = await api("/info");
   // Claim "on-chain" only when the seller explicitly says so; anything else is shown as simulated/unknown.
-  const onChain = /^facilitator/.test(info.settlement);
-  const settleText = onChain ? "on-chain" : /SIMULATED/.test(info.settlement) ? "SIMULATED" : "unknown";
+  const onChain = /^on-chain/.test(info.settlement);
+  const settleText = onChain ? "on-chain (Kite testnet)" : "unknown";
   $("chips").innerHTML = `<span class="chip">Kite testnet</span><span class="chip ${onChain ? "ok" : "warn"}">Settlement: ${settleText}</span><span class="chip">Judge: SERV Reasoning</span>`;
   $("doc").value = info.demoDocument;
   for (let i = 1; i <= info.maxTicks; i++) $("ticks").add(new Option(i, i, i === 5, i === 5));

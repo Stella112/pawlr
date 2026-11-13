@@ -1,4 +1,4 @@
-import { FACILITATOR_URL, type KiteChain, kiteChainByName, toBaseUnits } from "@pawlr/protocol";
+import { FACILITATOR_URL, type KiteChain, chainWithAsset, kiteChainByName, requireAsset, toBaseUnits } from "@pawlr/protocol";
 
 export interface SellerConfig {
   chain: KiteChain;
@@ -13,8 +13,12 @@ export interface SellerConfig {
   /** Internal tick service port, bound to 127.0.0.1 only. */
   internalPort: number;
   facilitatorUrl: string;
-  /** "facilitator": real settlement via Pieverse. "simulated": real signature checks, no on-chain transfer (labelled everywhere). */
-  settlementMode: "facilitator" | "simulated";
+  /** "facilitator": on-chain via the hosted Pieverse facilitator. "self": on-chain via Pawlr's own facilitator (official x402 code + gas wallet), testnet only. */
+  settlementMode: "facilitator" | "self";
+  /** Gas wallet key for settlementMode "self". */
+  facilitatorPrivateKey: string;
+  /** RPC for settlementMode "self" (defaults to the chain's RPC). */
+  rpcUrl: string;
   dataDir: string;
   publicBaseUrl: string;
   servApiKey: string;
@@ -39,7 +43,16 @@ export class ConfigError extends Error {}
  */
 export function loadConfig(env: Record<string, string | undefined>): SellerConfig {
   const get = (k: string, fallback = "") => (env[k] ?? "").trim() || fallback;
-  const chain = kiteChainByName(get("KITE_NETWORK", "testnet"));
+  let chain = kiteChainByName(get("KITE_NETWORK", "testnet"));
+  // Optional: price ticks in another registered token on the same network (e.g. Pawlr Test USD on testnet).
+  const assetOverride = get("SETTLEMENT_ASSET");
+  if (assetOverride) {
+    try {
+      chain = chainWithAsset(chain, requireAsset(chain.network, assetOverride));
+    } catch (err) {
+      throw new ConfigError(`SETTLEMENT_ASSET: ${(err as Error).message}`);
+    }
+  }
   const payTo = get("SELLER_PAY_TO");
   const pricePerTick = get("PRICE_PER_TICK", "0.001");
   const adminPassword = get("ADMIN_PASSWORD");
@@ -67,8 +80,10 @@ export function loadConfig(env: Record<string, string | undefined>): SellerConfi
   }
 
   const settlementMode = get("SETTLEMENT_MODE", "facilitator");
-  if (settlementMode !== "facilitator" && settlementMode !== "simulated") throw new ConfigError("SETTLEMENT_MODE must be facilitator or simulated");
-  if (chain.name === "mainnet" && settlementMode === "simulated") throw new ConfigError("mainnet refused: SETTLEMENT_MODE=simulated is testnet only");
+  if (settlementMode !== "facilitator" && settlementMode !== "self") throw new ConfigError("SETTLEMENT_MODE must be facilitator or self");
+  if (chain.name === "mainnet" && settlementMode === "self") throw new ConfigError("mainnet refused: SETTLEMENT_MODE=self is testnet only");
+  const facilitatorPrivateKey = get("FACILITATOR_PRIVATE_KEY");
+  if (settlementMode === "self" && !/^0x[0-9a-fA-F]{64}$/.test(facilitatorPrivateKey)) throw new ConfigError("SETTLEMENT_MODE=self needs FACILITATOR_PRIVATE_KEY (gas wallet)");
 
   const port = Number(get("PORT", "8080"));
   const internalPort = Number(get("INTERNAL_TICK_PORT", "8081"));
@@ -84,6 +99,8 @@ export function loadConfig(env: Record<string, string | undefined>): SellerConfi
     internalPort,
     facilitatorUrl: get("FACILITATOR_URL", FACILITATOR_URL),
     settlementMode,
+    facilitatorPrivateKey,
+    rpcUrl: get("KITE_RPC_URL", chain.rpcUrl),
     dataDir: get("DATA_DIR", "data"),
     publicBaseUrl: get("PUBLIC_BASE_URL"),
     servApiKey: get("SERV_API_KEY"),

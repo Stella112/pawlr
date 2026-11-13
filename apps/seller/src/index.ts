@@ -3,4 +3,4 @@ export { createPublicApp, httpTickForwarder, SELLER_VERSION, TICK_ROUTE } from "
 export { createTickService, INJECTION_TEXT } from "./tickService.js";
 export { FAILURE_MODES, Store, type FailureMode, type TruthEntry } from "./store.js";
 export { CachedSummarizer, ServSummarizer, type Summarizer } from "./summarizer.js";
-export { SimulatedFacilitator, SIMULATED_TX_PREFIX } from "./simulatedFacilitator.js";
+export { createSelfFacilitator } from "./selfFacilitator.js";
