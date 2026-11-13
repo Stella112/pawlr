@@ -83,7 +83,7 @@ export function buildConditions(seller: SellerInfo, sections: Section[], opts: {
 
 export interface RunEvents {
   log?: (line: string) => void;
-  onTick?: (v: TickVerdict) => void;
+  onTick?: (v: TickVerdict, evidence?: TickEvidence) => void;
 }
 
 export interface RunDeps {
@@ -250,7 +250,7 @@ export async function runTicks(
     }
     ledger.update(n, { verdict });
     verdicts.push(verdict);
-    events.onTick?.(verdict);
+    events.onTick?.(verdict, parsed.success ? parsed.data : undefined);
     log(`tick ${n}: ${verdict.verdict.toUpperCase()} (${verdict.decidedBy}) ${verdict.reason}`);
     if (verdict.verdict !== "pass") {
       stoppedBecause = verdict.verdict === "fail" ? `PAUSED at tick ${n}: ${verdict.reason}` : `IN REVIEW at tick ${n}: ${verdict.reason}`;

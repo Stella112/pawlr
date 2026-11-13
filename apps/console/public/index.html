@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pawlr Console</title>
+<style>
+:root{--bg:#f6f5f1;--fg:#16181d;--muted:#5d6370;--card:#fff;--line:#e2dfd7;--accent:#1f6f5c;--accent-bg:#e6f2ed;--ok:#1d7a4f;--ok-bg:#e3f4ea;--bad:#b42318;--bad-bg:#fde8e6;--warn:#8a5a00;--warn-bg:#fdf1d6;--mark:#ffe58a;--mono:ui-monospace,SFMono-Regular,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#101215;--fg:#ebe9e4;--muted:#9aa1ad;--card:#181b20;--line:#2a2e35;--accent:#5cc6a7;--accent-bg:#17312a;--ok:#5fd39a;--ok-bg:#15301f;--bad:#ff8a7e;--bad-bg:#3a1714;--warn:#f2c160;--warn-bg:#352a12;--mark:#6b5a12}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 16px 64px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 16px;margin-bottom:6px}
+h1{font-size:28px;margin:0;letter-spacing:-.02em}
+.tag{color:var(--muted);margin:0 0 18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--accent-bg);color:var(--accent)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:16px 0}
+.card h2{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--card);font-size:11px}
+textarea,input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{width:100%;min-height:150px;font-family:var(--mono);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:10px}
+label{font-size:14px;color:var(--muted)}
+button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:9px 16px;background:var(--accent);color:#fff;cursor:pointer}
+button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button.danger{background:var(--bad)}
+button:disabled{opacity:.5;cursor:not-allowed}
+fieldset{border:1px dashed var(--warn);border-radius:10px;padding:10px 12px;margin:12px 0 0}
+legend{font-size:12px;font-weight:700;color:var(--warn);padding:0 6px;letter-spacing:.05em}
+pre{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;max-height:260px;margin:8px 0 0}
+.hash{font-family:var(--mono);font-size:13px;overflow-wrap:anywhere}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.banner{border-radius:12px;padding:12px 16px;font-weight:600;margin:0 0 12px}
+.banner.running{background:var(--accent-bg);color:var(--accent)}
+.banner.paused,.banner.error{background:var(--bad-bg);color:var(--bad)}
+.banner.review{background:var(--warn-bg);color:var(--warn)}
+.banner.done{background:var(--ok-bg);color:var(--ok)}
+.meter{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
+.pip{flex:1;min-width:34px;height:10px;border-radius:5px;background:var(--line)}
+.pip.pass{background:var(--ok)}.pip.fail{background:var(--bad)}.pip.unsure{background:var(--warn)}.pip.run{background:var(--accent);opacity:.5}
+.tick{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;background:var(--bg)}
+.tick.fail{border-color:var(--bad)}.tick.unsure{border-color:var(--warn)}
+.tick-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.tick-head b{font-size:16px}
+.badge{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase}
+.badge.pass{background:var(--ok-bg);color:var(--ok)}.badge.fail{background:var(--bad-bg);color:var(--bad)}.badge.unsure{background:var(--warn-bg);color:var(--warn)}
+.output{background:var(--card);border-left:3px solid var(--accent);padding:8px 12px;border-radius:6px;margin:8px 0}
+mark{background:var(--mark);color:inherit;padding:0 2px;border-radius:3px}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;font-size:13px;margin-top:8px}
+.ck{display:flex;gap:6px}.ck .i{width:16px;flex:none;text-align:center;font-weight:700}
+.i.y{color:var(--ok)}.i.n{color:var(--bad)}.i.u{color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.meta code{font-family:var(--mono);color:var(--fg)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+@media (max-width:640px){.grid2{grid-template-columns:1fr}h1{font-size:24px}}
+.stat{font-size:13px;color:var(--muted)}.stat b{display:block;font-size:20px;color:var(--fg)}
+.hidden{display:none!important}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.notice{font-size:13px;color:var(--muted);border-left:3px solid var(--warn);padding:2px 10px;margin:8px 0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Pawlr Console</h1>
+    <div class="chips" id="chips"></div>
+  </header>
+  <p class="tag">The catch that stops paying the moment delivery fails. The most you can lose is one tick.</p>
+
+  <section class="card" id="newCard">
+    <h2><span class="step">1</span> New session</h2>
+    <label for="doc">Document (Markdown; each heading is one section, one section per tick)</label>
+    <textarea id="doc"></textarea>
+    <div class="row">
+      <label>Ticks <select id="ticks"></select></label>
+      <label>Network <select disabled><option>Kite testnet (eip155:2368)</option></select></label>
+      <span class="muted small" id="priceInfo"></span>
+    </div>
+    <fieldset>
+      <legend>SIMULATED FAILURE (demo only)</legend>
+      <div class="row" style="margin-top:0">
+        <label><input type="checkbox" id="failOn"> Stage a failure on the seller</label>
+        <label>Mode <select id="failMode"></select></label>
+        <label>From tick <select id="failFrom"></select></label>
+      </div>
+      <p class="notice">The seller's failure switch degrades its own output from that tick on. Tick responses never reveal it; Pawlr has to catch it.</p>
+    </fieldset>
+    <div class="row"><button id="draftBtn">Show conditions</button><span class="muted small" id="draftErr"></span></div>
+  </section>
+
+  <section class="card hidden" id="condCard">
+    <h2><span class="step">2</span> Delivery Conditions</h2>
+    <p class="small muted" style="margin:0">Both sides agree to exactly this text. Pawlr judges every tick against it and nothing else.</p>
+    <p style="margin:10px 0 0">conditionsHash <span class="hash" id="condHash"></span></p>
+    <pre id="condJson"></pre>
+    <div class="row"><button id="startBtn">Agree and start</button><span class="muted small" id="startErr"></span></div>
+  </section>
+
+  <section class="card hidden" id="payCard">
+    <h2>Payment</h2>
+    <div class="grid2 small">
+      <div><b>Paying with:</b> <span id="payerLabel"></span><br><span class="muted">Each tick is a real signed x402 payment authorization (EIP-3009) for the exact price, to the agreed payee.</span></div>
+      <div><b>Settlement:</b> <span id="settleLabel"></span><br><span class="muted">No tokens move on-chain on this deployment. Settlement ids start with <code>SIMULATED-</code>.</span></div>
+    </div>
+    <details style="margin-top:10px"><summary>Kite Passport status</summary>
+      <p class="small">Built and tested with the Kite Passport CLI (kpass 6.13.2): a spending session was created and approved with a passkey (0.001 per payment, 0.01 total, 3 hours). Paying this host was refused by Kite with <code>payment_target_forbidden</code> / <code>host_not_in_executable_catalog</code>: Passport only pays hosts in Kite's service catalog. Commands used:</p>
+      <pre>kpass session create --separate --task-summary "…" --max-amount-per-tx 0.001 --max-total-amount 0.01 --assets PIEUSD --ttl 3h
+kpass session status --request-id &lt;id&gt; --wait
+kpass session execute --url &lt;tick url&gt; --method GET --headers '{"pawlr-conditions-hash":"…"}' --idempotency-key &lt;key&gt;</pre>
+    </details>
+  </section>
+
+  <section class="card hidden" id="meterCard">
+    <h2><span class="step">3</span> Live meter</h2>
+    <div class="banner running" id="banner">Starting…</div>
+    <div class="meter" id="pips"></div>
+    <div class="row" style="margin:0 0 6px">
+      <div class="stat">Ticks paid<b id="sPaid">0</b></div>
+      <div class="stat">Spent<b id="sSpent">0</b></div>
+      <div class="stat">SERV cost<b id="sCost">$0</b></div>
+    </div>
+    <div id="reviewBox" class="hidden card" style="background:var(--warn-bg);border-color:var(--warn)">
+      <b>Tick <span id="rvTick"></span> is in review.</b> Nothing more is paid until a person decides.
+      <div class="row"><input type="password" id="rvPw" placeholder="Admin password" autocomplete="off"><button id="rvApprove">Approve (pass)</button><button class="danger" id="rvReject">Reject (fail)</button><button class="secondary" disabled title="Reppo client not built">Send to Reppo (not built)</button></div>
+      <span class="small" id="rvErr"></span>
+    </div>
+    <div id="ticksList"></div>
+  </section>
+
+  <section class="card hidden" id="receiptCard">
+    <h2><span class="step">4</span> Receipt</h2>
+    <div class="row" style="margin-top:0">
+      <div class="stat">Paid<b id="rPaid"></b></div>
+      <div class="stat">Failed<b id="rFail"></b></div>
+      <div class="stat">In review<b id="rRev"></b></div>
+      <div class="stat">Total paid<b id="rTotal"></b></div>
+    </div>
+    <p style="margin:12px 0 0"><b id="rMaxLoss"></b></p>
+    <p class="small muted" id="rStopped"></p>
+    <div class="row"><button class="secondary" id="dlBtn">Download receipt JSON</button></div>
+  </section>
+
+  <section class="card hidden" id="recoverCard">
+    <h2><span class="step">5</span> Recover</h2>
+    <p class="small muted" style="margin-top:0">Pick the paid ticks to claim back. SERV drafts the claim from the receipt only; code re-checks the amount and wins on any mismatch.</p>
+    <div id="claimTicks" class="row" style="margin-top:0"></div>
+    <div class="row"><button id="claimBtn">Draft claim with SERV</button><span class="small" id="claimErr"></span></div>
+    <div id="claimBox" class="hidden">
+      <pre id="claimJson"></pre>
+      <p class="small" id="claimCorr"></p>
+      <div class="row"><button id="sendBtn">Approve and send to the seller</button></div>
+    </div>
+    <p id="refundOut" class="hidden" style="margin:12px 0 0"></p>
+  </section>
+
+  <details class="card hidden" id="logCard"><summary>Run log</summary><pre id="log"></pre></details>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const api = async (path, body) => {
+  const r = await fetch("/console/api" + path, body === undefined ? {} : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+};
+let info = null, session = null, poll = null, draft = null;
+
+function highlight(output, quote) {
+  if (!quote) return esc(output);
+  const norm = (s) => s.replace(/\s+/g, " ");
+  const o = norm(output), q = norm(quote).trim(), i = o.indexOf(q);
+  if (i < 0) return esc(o);
+  return esc(o.slice(0, i)) + "<mark>" + esc(q) + "</mark>" + esc(o.slice(i + q.length));
+}
+function checkRow(name, c) {
+  if (!c) return "";
+  const icon = c.ok === true ? '<span class="i y">✓</span>' : c.ok === false ? '<span class="i n">✗</span>' : '<span class="i u">–</span>';
+  return `<div class="ck">${icon}<div><b>${name}</b> <span class="muted">${esc(c.detail)}</span></div></div>`;
+}
+function settlementHtml(tx) {
+  if (!tx) return "<code>none</code>";
+  if (tx.startsWith("SIMULATED-")) return `<code>${esc(tx)}</code> <span class="chip warn">simulated</span>`;
+  return `<a href="${info.explorer}${esc(tx)}" target="_blank" rel="noopener"><code>${esc(tx.slice(0, 14))}…</code></a>`;
+}
+
+async function init() {
+  info = await api("/info");
+  // Claim "on-chain" only when the seller explicitly says so; anything else is shown as simulated/unknown.
+  const onChain = /^facilitator/.test(info.settlement);
+  const settleText = onChain ? "on-chain" : /SIMULATED/.test(info.settlement) ? "SIMULATED" : "unknown";
+  $("chips").innerHTML = `<span class="chip">Kite testnet</span><span class="chip ${onChain ? "ok" : "warn"}">Settlement: ${settleText}</span><span class="chip">Judge: SERV Reasoning</span>`;
+  $("doc").value = info.demoDocument;
+  for (let i = 1; i <= info.maxTicks; i++) $("ticks").add(new Option(i, i, i === 5, i === 5));
+  for (let i = 1; i <= info.maxTicks; i++) $("failFrom").add(new Option(i, i, i === 3, i === 3));
+  info.failureModes.forEach((m) => $("failMode").add(new Option(m, m, m === "injection", m === "injection")));
+  $("priceInfo").textContent = `Price ${info.seller.pricePerTick} pieUSD per tick, paid to ${info.seller.payTo.slice(0, 8)}…${info.seller.payTo.slice(-4)}`;
+  $("payerLabel").textContent = info.payerLabel;
+  $("settleLabel").textContent = info.settlement;
+}
+
+$("draftBtn").onclick = async () => {
+  $("draftErr").textContent = "";
+  try {
+    draft = await api("/sessions", { markdown: $("doc").value, ticks: Number($("ticks").value), failure: $("failOn").checked ? { mode: $("failMode").value, fromTick: Number($("failFrom").value) } : null });
+    $("condHash").textContent = draft.conditionsHash;
+    $("condJson").textContent = JSON.stringify(draft.conditions, null, 2);
+    $("condCard").classList.remove("hidden");
+    $("condCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) { $("draftErr").textContent = e.message; }
+};
+
+$("startBtn").onclick = async () => {
+  $("startErr").textContent = "";
+  $("startBtn").disabled = true;
+  try {
+    session = await api(`/sessions/${draft.id}/start`, {});
+    ["payCard", "meterCard", "logCard"].forEach((id) => $(id).classList.remove("hidden"));
+    $("draftBtn").disabled = true;
+    render();
+    $("meterCard").scrollIntoView({ behavior: "smooth", block: "start" });
+    poll = setInterval(refresh, 1200);
+  } catch (e) { $("startErr").textContent = e.message; $("startBtn").disabled = false; }
+};
+
+async function refresh() {
+  try { session = await api(`/sessions/${session.id}`); render(); } catch {}
+  if (!["running", "draft"].includes(session.status)) { clearInterval(poll); poll = null; }
+}
+
+function render() {
+  const s = session, max = s.conditions.maxTicks, price = Number(s.conditions.pricePerTick);
+  const b = $("banner");
+  const msgs = {
+    running: "RUNNING: paying one tick at a time, judging each before the next",
+    paused: `PAUSED: ${s.stoppedBecause ? s.stoppedBecause.replace(/^PAUSED at /, "") : ""}`,
+    review: `IN REVIEW: ${s.stoppedBecause ? s.stoppedBecause.replace(/^IN REVIEW at /, "") : ""}`,
+    done: "DONE: every tick passed",
+    stopped: `STOPPED: ${s.stoppedBecause || ""}`,
+    error: `ERROR: ${s.error || ""}`,
+    draft: "Starting…",
+  };
+  b.className = "banner " + (s.status === "stopped" ? "paused" : s.status);
+  b.textContent = msgs[s.status] || s.status;
+  if (s.failure) b.textContent += `  ·  SIMULATED FAILURE staged: ${s.failure.mode} from tick ${s.failure.fromTick}`;
+
+  const byTick = Object.fromEntries(s.ticks.map((t) => [t.tick, t]));
+  $("pips").innerHTML = Array.from({ length: max }, (_, i) => {
+    const t = byTick[i + 1];
+    const cls = t ? t.verdict.verdict : s.status === "running" && i === s.ticks.length ? "run" : "";
+    return `<div class="pip ${cls}" title="tick ${i + 1}"></div>`;
+  }).join("");
+  const paid = s.ticks.length, cost = s.ticks.reduce((a, t) => a + (t.verdict.cost?.servUsd || 0), 0);
+  $("sPaid").textContent = `${paid} / ${max}`;
+  $("sSpent").textContent = `${(paid * price).toFixed(3)} pieUSD`;
+  $("sCost").textContent = `$${cost.toFixed(4)}`;
+
+  $("ticksList").innerHTML = s.ticks.slice().reverse().map((t) => {
+    const v = t.verdict, ck = v.checks;
+    const out = t.output === undefined ? "" : t.output === "" ? '<div class="output muted">(empty output)</div>' : `<div class="output">${highlight(t.output, v.quote)}</div>`;
+    const quoteNote = v.quote && t.output && !t.output.replace(/\s+/g, " ").includes(v.quote.replace(/\s+/g, " ").trim()) ? `<div class="small"><b>Quote (from the section text):</b> <mark>${esc(v.quote)}</mark></div>` : "";
+    return `<div class="tick ${v.verdict}">
+      <div class="tick-head"><b>Tick ${t.tick}</b><span class="muted">${esc(t.sectionName || "")}</span><span class="badge ${v.verdict}">${v.verdict}</span><span class="chip">decided by ${esc(v.decidedBy)}</span></div>
+      ${out}${quoteNote}
+      <div class="small"><b>Reason:</b> ${esc(v.reason)}</div>
+      <div class="checks">${checkRow("Presence", ck.presence)}${checkRow("Integrity", ck.integrity)}${checkRow("Completion", ck.completion)}${checkRow("PromptGuard", ck.guard)}${checkRow("Screen", ck.screen)}${checkRow("Relevance", ck.relevance)}${checkRow("Quote", ck.quote)}${checkRow("Shadow Agent", ck.shadow)}</div>
+      <div class="meta"><span>Paid <code>${esc(v.payment.amount)} pieUSD</code></span><span>Settlement ${settlementHtml(v.payment.txHash)}</span><span>SERV <code>${v.cost?.servUsd ? "$" + v.cost.servUsd.toFixed(5) : "–"}</code></span><span>Latency <code>${v.latencyMs} ms</code></span><span>Prompt <code>${esc(v.promptVersion || "–")}</code></span></div>
+    </div>`;
+  }).join("") + (s.status !== "running" && s.ticks.length < max ? `<p class="small muted">Ticks ${s.ticks.length + 1}–${max}: <b>never paid.</b></p>` : "");
+
+  const rv = s.status === "review" ? s.ticks.find((t) => t.verdict.verdict === "unsure") : null;
+  $("reviewBox").classList.toggle("hidden", !rv);
+  if (rv) $("rvTick").textContent = rv.tick;
+
+  $("log").textContent = s.log.join("\n");
+
+  if (s.receipt) {
+    const r = s.receipt;
+    $("receiptCard").classList.remove("hidden");
+    $("rPaid").textContent = r.ticksPaid;
+    $("rFail").textContent = r.ticksRefused;
+    $("rRev").textContent = r.ticksInReview;
+    $("rTotal").textContent = `${r.totalPaid} pieUSD`;
+    $("rMaxLoss").textContent = `Maximum possible loss: 1 tick (${r.maxLossBound} pieUSD)`;
+    $("rStopped").textContent = `Stopped: ${r.stoppedBecause || ""}`;
+    $("recoverCard").classList.remove("hidden");
+    if (!$("claimTicks").dataset.done) {
+      $("claimTicks").innerHTML = r.ticks.map((t) => `<label><input type="checkbox" value="${t.tick}" ${t.verdict === "fail" ? "checked" : ""}> Tick ${t.tick} (${t.verdict})</label>`).join("");
+      $("claimTicks").dataset.done = "1";
+    }
+  }
+  if (s.refund) {
+    $("refundOut").classList.remove("hidden");
+    $("refundOut").innerHTML = `<b>Refund requested.</b> Money is not returned automatically.<br><span class="small muted">Request id <code>${esc(s.refund.requestId)}</code> for ${esc(s.refund.amountOwed)} pieUSD (ticks ${s.refund.ticks.join(", ")}), received by the seller at ${esc(s.refund.receivedAt)}.</span>`;
+  }
+}
+
+async function decide(decision) {
+  $("rvErr").textContent = "";
+  try { session = await api(`/sessions/${session.id}/review`, { tick: Number($("rvTick").textContent), decision, password: $("rvPw").value }); render(); if (!poll) poll = setInterval(refresh, 1200); }
+  catch (e) { $("rvErr").textContent = e.message; }
+}
+$("rvApprove").onclick = () => decide("approve");
+$("rvReject").onclick = () => decide("reject");
+
+$("dlBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(session.receipt, null, 2)], { type: "application/json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `pawlr-receipt-${session.id}.json` });
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+let claimDraft = null;
+$("claimBtn").onclick = async () => {
+  $("claimErr").textContent = "";
+  const ticks = [...$("claimTicks").querySelectorAll("input:checked")].map((i) => Number(i.value));
+  $("claimBtn").disabled = true;
+  try {
+    claimDraft = await api(`/sessions/${session.id}/claim`, { ticks });
+    $("claimJson").textContent = JSON.stringify(claimDraft.claim, null, 2);
+    $("claimCorr").textContent = claimDraft.corrections.length ? "Code corrections: " + claimDraft.corrections.join("; ") : "Code check: SERV's draft matched the receipt.";
+    $("claimBox").classList.remove("hidden");
+  } catch (e) { $("claimErr").textContent = e.message; }
+  $("claimBtn").disabled = false;
+};
+$("sendBtn").onclick = async () => {
+  $("sendBtn").disabled = true;
+  try { await api(`/sessions/${session.id}/claim/send`, { claim: claimDraft.claim }); session = await api(`/sessions/${session.id}`); render(); }
+  catch (e) { $("claimErr").textContent = e.message; $("sendBtn").disabled = false; }
+};
+
+init().catch((e) => { document.querySelector("main").insertAdjacentHTML("afterbegin", `<div class="banner error">Console could not load: ${esc(e.message)}</div>`); });
+</script>
+</body>
+</html>

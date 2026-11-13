@@ -20,7 +20,23 @@ importers:
 
   apps/bench: {}
 
-  apps/console: {}
+  apps/console:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.8
+        version: 2.1.8(hono@4.13.18)
+      '@pawlr/buyer':
+        specifier: workspace:*
+        version: link:../../packages/buyer
+      '@pawlr/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
+      '@pawlr/verifier':
+        specifier: workspace:*
+        version: link:../../packages/verifier
+      hono:
+        specifier: ^4.13.18
+        version: 4.13.18
 
   apps/seller:
     dependencies:
