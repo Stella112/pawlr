@@ -72,5 +72,57 @@ export const AddedEvidence = z.object({
 });
 export type AddedEvidence = z.infer<typeof AddedEvidence>;
 
+/** CLAUDE.md §7.4. `ok: null` means the stage did not run. */
+export const Check = z.object({ ok: z.boolean().nullable(), detail: z.string() });
+export type Check = z.infer<typeof Check>;
+
+export const Verdict = z.enum(["pass", "fail", "unsure"]);
+export type Verdict = z.infer<typeof Verdict>;
+
+export const TickVerdict = z.object({
+  sessionId: z.string(),
+  tick: z.number().int().min(1),
+  verdict: Verdict,
+  decidedBy: z.enum(["code", "dolphin+serv", "serv", "serv+shadow", "dolphin", "reppo", "human"]),
+  checks: z.object({
+    presence: Check,
+    integrity: Check,
+    completion: Check,
+    guard: Check,
+    screen: Check.optional(),
+    relevance: Check.optional(),
+    quote: Check.optional(),
+    shadow: Check.optional(),
+  }),
+  quote: z.string().nullable(),
+  reason: z.string(),
+  payment: z.object({ txHash: z.string().nullable(), amount: z.string(), network: z.string() }),
+  cost: z.object({
+    servTokens: z.number().optional(),
+    servUsd: z.number().optional(),
+    dolphinUsd: z.number().optional(),
+    reppoCredits: z.number().optional(),
+  }),
+  promptVersion: z.string().nullable(),
+  latencyMs: z.number(),
+  createdAt: z.string(),
+});
+export type TickVerdict = z.infer<typeof TickVerdict>;
+
+/** CLAUDE.md §7.5 */
+export const Receipt = z.object({
+  sessionId: z.string(),
+  conditionsHash: hex64,
+  ticksPaid: z.number().int(),
+  ticksRefused: z.number().int(),
+  ticksInReview: z.number().int(),
+  totalPaid: decimal,
+  maxLossBound: decimal,
+  ticks: z.array(TickVerdict),
+  startedAt: z.string(),
+  endedAt: z.string(),
+});
+export type Receipt = z.infer<typeof Receipt>;
+
 /** Header the buyer sends with each tick request: the agreed conditions hash. */
 export const CONDITIONS_HASH_HEADER = "pawlr-conditions-hash";

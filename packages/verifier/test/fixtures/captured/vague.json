@@ -1,0 +1,93 @@
+{
+  "capturedAt": "2026-11-13T12:06:19.811Z",
+  "source": "live SERV, scripts/probe/capture-verifier-fixtures.mjs, prompt ruling-v1",
+  "case": "vague",
+  "nowMs": 1794571579811,
+  "conditions": {
+    "version": "pawlr/1",
+    "sessionId": "fixture-session",
+    "task": "Summarise each section of the supplied document",
+    "seller": {
+      "payTo": "0x803376Fb273cBC5B5dceb74741f47EF595699d8E",
+      "endpoint": "https://pawlr.16-61-50-207.sslip.io/tick"
+    },
+    "network": "eip155:2368",
+    "asset": "0x38129cf4CE5E183eFF248F42A7D345Bb1B47621A",
+    "pricePerTick": "0.001",
+    "maxTicks": 8,
+    "maxSpend": "0.008",
+    "presence": {
+      "maxAgeSeconds": 300
+    },
+    "completion": {
+      "minSentences": 1,
+      "maxSentences": 3,
+      "minKeyTerms": 3
+    },
+    "relevance": {
+      "rule": "output must summarise the named section of the agreed document"
+    },
+    "document": {
+      "sections": [
+        {
+          "name": "Refunds",
+          "sourceHash": "39aa5a9b2e02f8e225f8102823cd40ce6c6c2bc9f3beba4e5b5fe2f8b6dc5765"
+        },
+        {
+          "name": "Shipping",
+          "sourceHash": "83e2e6076452ea6cdbabeec123d52f1257392da6f9129a659640ed951f67f9ef"
+        }
+      ]
+    }
+  },
+  "sectionTexts": {
+    "Refunds": "Customers may request a refund within 30 days of purchase. Refunds are paid to the original payment method within 14 days of approval. Opened digital downloads are not eligible for a refund unless the file is faulty. To start a refund, customers contact support with their order number.",
+    "Shipping": "Shipping is free on orders over 50 dollars. Standard delivery takes 3 to 5 business days. Express delivery takes 1 to 2 business days for an extra fee. Orders ship from our warehouse in Leeds and include a tracking number."
+  },
+  "evidence": {
+    "sessionId": "fixture-session",
+    "tick": 1,
+    "timestamp": "2026-11-13T12:06:19.811Z",
+    "sectionName": "Refunds",
+    "sourceHash": "39aa5a9b2e02f8e225f8102823cd40ce6c6c2bc9f3beba4e5b5fe2f8b6dc5765",
+    "outputHash": "e013e2e7db5e886c4c74b46f75ebc709b232feb321102ab9852813e166e3ac67",
+    "conditionsHash": "72a28bb13a410990a0b6db84eb1603a7eea7037f422de573166ff0ba40c52016",
+    "output": "Customers who contact support with an order number about a purchase can get help. The method depends on the case."
+  },
+  "recorded": [],
+  "verdict": {
+    "sessionId": "fixture-session",
+    "tick": 1,
+    "verdict": "fail",
+    "decidedBy": "code",
+    "checks": {
+      "presence": {
+        "ok": true,
+        "detail": "tick 1, 0 s old, hash matches"
+      },
+      "integrity": {
+        "ok": true,
+        "detail": "section hash and output hash match"
+      },
+      "completion": {
+        "ok": false,
+        "detail": "output has 2 of the section's key terms (need 3): found [customer, purchase] of [refund, customer, days, request, purchase, paid, original, payment]"
+      },
+      "guard": {
+        "ok": null,
+        "detail": "not run"
+      }
+    },
+    "quote": null,
+    "reason": "Completion: output has 2 of the section's key terms (need 3): found [customer, purchase] of [refund, customer, days, request, purchase, paid, original, payment]",
+    "payment": {
+      "txHash": null,
+      "amount": "0.001",
+      "network": "eip155:2368"
+    },
+    "cost": {},
+    "promptVersion": null,
+    "latencyMs": 0,
+    "createdAt": "2026-11-13T12:06:19.811Z"
+  }
+}
