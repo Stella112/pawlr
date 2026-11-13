@@ -16,7 +16,7 @@ export interface PayRequest {
 
 export type PayResult =
   /** Merchant answered 2xx after payment. `body` is the merchant's JSON. */
-  | { kind: "paid"; status: number; body: unknown; raw: unknown }
+  | { kind: "paid"; status: number; body: unknown; raw: unknown; txHash?: string | null }
   /** Nothing was charged (refused before paying, e.g. caps, scope, allowlist, empty wallet). */
   | { kind: "not-charged"; errorCode: string; message: string; raw: unknown }
   /** A payment may have gone through or is held; never pay this tick again. */

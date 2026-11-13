@@ -143,6 +143,19 @@ Explorer tx link pattern: Kite's faucet page links `https://testnet.kitescan.ai/
 
 ---
 
+## 3b. Backup payment route: direct x402 wallet (no Passport)
+
+Built 2026-11-13 because Passport refuses non-catalog hosts. `pawlr run --payer wallet` (`packages/buyer/src/walletPayer.ts`).
+
+| Item | Status | Evidence |
+|---|---|---|
+| `@x402/fetch` 2.30.0: `wrapFetchWithPayment(fetch, client)`, `x402Client`, `decodePaymentResponseHeader` | SRC | `@x402/fetch/dist/esm/index.d.mts` |
+| `@x402/evm/exact/client`: `new ExactEvmScheme(signer)`; signer needs `address` + `signTypedData` (a viem account fits) | SRC | `signer-okf_34IN.d.mts`, `scheme-5YXtSGuA.d.mts` |
+| Transfer method chosen from `requirements.extra.assetTransferMethod`, default `"eip3009"` (TransferWithAuthorization: signature only, facilitator pays gas). Our 402 has no assetTransferMethod, so EIP-3009 | SRC | `@x402/evm/dist/esm/chunk-CJ62XFQ3.mjs` line 108 |
+| `client.registerPolicy((v, reqs) => reqs)` filters options before signing; Pawlr pins payee, network, asset, amount ≤ pricePerTick | SRC + TEST | `x402Client-CWf4x4tk.d.mts`; walletPayer.test.ts |
+| **Client spend controls refuse non-default assets by default** ("only default assets or entries in spendControls.allowedAssets are allowed"); Kite pieUSD/USDC.e need `setSpendControls({ allowedAssets: [{ network, asset, maxAmountPerPayment }] })` | CAPTURED (test run) + SRC | error seen 2026-11-13; type in `x402Client-CWf4x4tk.d.mts` |
+| Live payment on this route | **OPEN** | Needs a funded buyer wallet: testnet pieUSD has no public source (fixed 1,000,000 supply held by creator `0xCfF4…FF52`, contract unverified; Blockscout API 2026-11-13), so a live run means Kite mainnet USDC.e and Maris's "go mainnet" |
+
 ## 4. Dolphin
 
 **OPEN.** Base URL, auth, request format and model ID needed from Maris.

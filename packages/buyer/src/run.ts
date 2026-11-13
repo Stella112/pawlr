@@ -178,6 +178,7 @@ export async function runTicks(
           break;
         }
         evidenceBody = r.body;
+        txHash = r.txHash ?? null;
       } else {
         stoppedBecause = `tick ${n} is ${existing.state}; not paying again`;
         break;
@@ -207,7 +208,8 @@ export async function runTicks(
         break;
       }
       evidenceBody = r.body;
-      ledger.update(n, { state: "paid", paidAt: new Date().toISOString() });
+      txHash = r.txHash ?? null;
+      ledger.update(n, { state: "paid", paidAt: new Date().toISOString(), txHash });
     }
 
     // Tx hash: buyer-side lookup first; the seller's recorded settlement as a second source.

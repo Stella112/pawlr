@@ -1,12 +1,14 @@
 #!/usr/bin/env node
-// pawlr run --doc file.md --ticks 8 --network testnet [--seller URL] [--data DIR]
+// pawlr run --doc file.md --ticks 8 --network testnet [--payer kpass|wallet] [--seller URL] [--data DIR]
 // Needs SERV_API_KEY in the environment (node --env-file=.env ...).
+// --payer kpass (default): Kite Passport. --payer wallet: backup route, direct x402 from BUYER_PRIVATE_KEY.
 import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { servTransport } from "@pawlr/verifier";
 import { parseDocument } from "./document.js";
-import { KpassPayer } from "./payer.js";
+import { KpassPayer, type Payer } from "./payer.js";
+import { WalletPayer } from "./walletPayer.js";
 import { agreeSession, buildConditions, fetchSellerInfo, loadSpendLimits, runTicks } from "./run.js";
 
 const DEFAULT_SELLER = "https://pawlr.vercel.app";
@@ -22,10 +24,11 @@ async function main() {
       seller: { type: "string", default: DEFAULT_SELLER },
       data: { type: "string", default: "data" },
       "session-id": { type: "string" },
+      payer: { type: "string", default: "kpass" },
     },
   });
   if (positionals[0] !== "run" || !values.doc) {
-    console.error("usage: pawlr run --doc file.md --ticks 8 --network testnet [--seller URL] [--data DIR]");
+    console.error("usage: pawlr run --doc file.md --ticks 8 --network testnet [--payer kpass|wallet] [--seller URL] [--data DIR]");
     process.exit(2);
   }
   const network = values.network === "mainnet" ? "mainnet" : "testnet";
@@ -44,12 +47,24 @@ async function main() {
   const conditionsHash = await agreeSession(seller, conditions, sections);
   console.log(`Agreed. conditionsHash ${conditionsHash}`);
 
+  let payer: Payer;
+  if (values.payer === "wallet") {
+    const key = (process.env.BUYER_PRIVATE_KEY ?? "").trim();
+    if (!key) throw new Error("--payer wallet needs BUYER_PRIVATE_KEY in .env (never commit or paste it)");
+    const w = new WalletPayer({ privateKey: key, conditions });
+    console.log(`Payer: direct x402 wallet ${w.address} (backup route; Kite Passport limits do not apply, Pawlr caps do)`);
+    payer = w;
+  } else if (values.payer === "kpass") {
+    payer = new KpassPayer();
+    console.log("Payer: Kite Passport (kpass)");
+  } else throw new Error(`unknown --payer ${values.payer}`);
+
   const dataDir = values.data!;
   mkdirSync(dataDir, { recursive: true });
   const { receipt, stoppedBecause, receiptFile } = await runTicks(
     { seller, conditions, conditionsHash, sections, limits },
     {
-      payer: new KpassPayer(),
+      payer,
       dataDir,
       verifier: { serv: servTransport(process.env.SERV_API_KEY ?? ""), onCost: (c) => appendFileSync(join(dataDir, "costs.jsonl"), JSON.stringify(c) + "\n") },
     },
