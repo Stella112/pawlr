@@ -9,7 +9,7 @@ import { parseDocument } from "./document.js";
 import { KpassPayer } from "./payer.js";
 import { agreeSession, buildConditions, fetchSellerInfo, loadSpendLimits, runTicks } from "./run.js";
 
-const DEFAULT_SELLER = "https://pawlr.16-61-50-207.sslip.io";
+const DEFAULT_SELLER = "https://pawlr.vercel.app";
 const EXPLORER = { testnet: "https://testnet.kitescan.ai/tx/", mainnet: "https://kitescan.ai/tx/" };
 
 async function main() {

@@ -87,6 +87,8 @@ export function createPublicApp(opts: {
         payTo: config.payTo,
         maxTimeoutSeconds: 60,
       },
+      // Public resource URL shown in the 402 (routeConfig.resource in @x402/core); defaults to the request URL.
+      ...(config.publicBaseUrl ? { resource: `${config.publicBaseUrl.replace(/\/$/, "")}/tick` } : {}),
       description: "Pawlr document digest: one section summary per paid tick",
       mimeType: "application/json",
     },
