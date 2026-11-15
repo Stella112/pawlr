@@ -84,7 +84,7 @@ Real seller at `pawlr.vercel.app`, real SERV rulings, real on-chain settlement.
 
 On-chain balances after both runs: buyer 10 → **9.992 pUSD**, seller **0.008 pUSD** (8 paid ticks, nothing more).
 
-**A finding we kept:** with an earlier wording of the agreed rule, SERV passed injected ticks, because the summary was correct and the rule did not forbid extra text. We made the agreed rule say the output must contain *only* the summary (`RELEVANCE_RULE`), which caught it. PromptGuard did not flag these injections; the written conditions and the quote rule did.
+**A finding we kept:** with an earlier wording of the agreed rule, SERV passed injected ticks, because the summary was correct and the rule did not forbid extra text. We made the agreed rule say the output must contain *only* the summary (`RELEVANCE_RULE`), which caught it. PromptGuard did not flag these injections; the written conditions and the quote rule did. In a later live run (2026-11-15, under the Passport session) PromptGuard **did** refuse the same injection, so Pawlr sent the tick to review, as designed ([tick 3](https://testnet.kitescan.ai/tx/0x0bf44dc9455c693c3b16f20d029aea9312710ab4e12868fcef1b49da78704ef0)); ticks 4–5 were never paid.
 
 SERV cost per ruling ≈ **$0.001** (from `usage` × model price).
 
@@ -164,7 +164,7 @@ The demo seller is built on the same packages anyone can use:
 - The payment token is Pawlr's own testnet token, settled by Pawlr's own facilitator, not pieUSD via the hosted Pieverse facilitator. Switching back is configuration (`SETTLEMENT_MODE=facilitator`, no `SETTLEMENT_ASSET`).
 - Kite Passport approves the limits but cannot execute payments to this host (Kite's catalog allowlist), so Pawlr enforces the approved limits itself and pays over x402 from the buyer wallet. Kite records the session's endpoint scope but does not enforce it on paid calls today, so Pawlr checks the endpoint and the payee itself.
 - Refunds are requested, never automatic.
-- PromptGuard is one layer, not a guarantee; it missed injections in our runs.
+- PromptGuard is one layer, not a guarantee: on the same injection it refused in one live run and let it through in others (where the written rule and SERV's ruling caught it).
 - Reppo judges the delivered text only, so it cannot see code facts such as a stale timestamp; Pawlr keeps the code checks first. Reppo submissions appear on Reppo's public feed, so only send material that may be public. docs.reppo.ai still documents a removed endpoint; Pawlr follows eval.reppo.xyz/agents.md.
 - Economy mode trusts a Dolphin pass (with a code-checked quote) on its own; demo mode, the default, keeps a SERV ruling on every tick.
 - Graph Sharding is not used. The code-first, model-second split is Pawlr's own design.
