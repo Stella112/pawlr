@@ -168,3 +168,7 @@ The demo seller is built on the same packages anyone can use:
 - Reppo judges the delivered text only, so it cannot see code facts such as a stale timestamp; Pawlr keeps the code checks first. Reppo submissions appear on Reppo's public feed, so only send material that may be public. docs.reppo.ai still documents a removed endpoint; Pawlr follows eval.reppo.xyz/agents.md.
 - Economy mode trusts a Dolphin pass (with a code-checked quote) on its own; demo mode, the default, keeps a SERV ruling on every tick.
 - Graph Sharding is not used. The code-first, model-second split is Pawlr's own design.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
