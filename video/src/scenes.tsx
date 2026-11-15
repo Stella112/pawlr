@@ -675,3 +675,78 @@ export const Close: React.FC<P> = ({ B }) => {
     </AbsoluteFill>
   );
 };
+
+/* ───────────────────────────── 2b. Kite Passport: a person authorises the agent ───────────────────────────── */
+const Fingerprint: React.FC<{ size: number; color: string }> = ({ size, color }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.4} strokeLinecap="round">
+    <path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5v1.5" />
+    <path d="M3.5 13.5V12A8.5 8.5 0 0 1 7 5.2" />
+    <path d="M12 7a5 5 0 0 1 5 5v2.5a9 9 0 0 1-1 4" />
+    <path d="M7 12a5 5 0 0 1 2.2-4.1" />
+    <path d="M7 12v2a7 7 0 0 1-1.2 4" />
+    <path d="M12 10.5a1.5 1.5 0 0 1 1.5 1.5v2.5a12 12 0 0 1-1.6 6" />
+    <path d="M10.5 12v2.5a8 8 0 0 1-1.7 5" />
+  </svg>
+);
+export const Passport: React.FC<P> = ({ B }) => {
+  const t = useT();
+  const k1 = B.k1;
+  const k2 = at(k1, "Pawlr checks");
+  const approve = at(k1, "with a passkey");
+  const scan = range(t, approve - 0.9, approve, 0, 1);
+  const ok = ease(t, approve, 0.4);
+  const limits = ["≤ 0.001 per payment", "0.5 in total", "expires in 7 days"];
+  const checks = ["Session active", "Within per-payment cap", "Within total cap", "Approved endpoint only"];
+  return (
+    <AbsoluteFill>
+      <Backdrop t={t + 30} tint="#E9ECFA" />
+      <div style={abs(0, 80, { width: 1920 })}>
+        <Serif t={t} at={0.1} size={76} text="First, a person *authorises the agent.*" />
+      </div>
+      {/* passkey approval */}
+      <In t={t} at={0.6} from="left" style={abs(150, 270)}>
+        <Card style={{ width: 560, padding: "40px 44px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Label>Kite Passport · passkey</Label>
+          <div style={{ position: "relative", width: 180, height: 180, marginTop: 26, borderRadius: 48, background: ok > 0.5 ? C.goodBg : C.soft, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+            <Fingerprint size={120} color={ok > 0.5 ? C.good : C.ink} />
+            <div style={{ position: "absolute", left: 0, right: 0, top: `${scan * 100}%`, height: 4, background: C.kite, opacity: scan > 0 && scan < 1 ? 0.8 : 0, boxShadow: `0 0 18px ${C.kite}` }} />
+          </div>
+          <div style={{ marginTop: 26, opacity: ok, transform: `scale(${0.8 + 0.2 * pop(t, approve, 0.5)})` }}>
+            <Pill tone="good" size={28}>✓ Approved by the owner</Pill>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 26, alignItems: "center" }}>
+            {limits.map((label, i) => (
+              <In key={label} t={t} at={approve + 0.5 + i * 0.3} from="up" dist={20}>
+                <Pill tone="plain" size={26}>{label}</Pill>
+              </In>
+            ))}
+          </div>
+        </Card>
+      </In>
+      {/* the real dashboard card */}
+      <In t={t} at={at(k1, "Kite Passport")} from="right" dist={80} style={abs(800, 300)}>
+        <div style={{ position: "relative" }}>
+          <Shot src="shots/passport-card.png" w={980} />
+          <div style={abs(0, -46)}>
+            <Pill tone="glass" size={21}>
+              <span style={{ width: 10, height: 10, borderRadius: 5, background: C.good, display: "inline-block" }} /> Live session on pawlr.vercel.app · Kite testnet sandbox
+            </Pill>
+          </div>
+        </div>
+      </In>
+      {/* checked before every signature */}
+      <div style={abs(800, 720, { width: 980 })}>
+        <In t={t} at={k2} from="up" dist={20}>
+          <div style={{ fontFamily, fontSize: 28, color: C.ink, fontWeight: 600, marginBottom: 16 }}>Before every signature, Pawlr checks:</div>
+        </In>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+          {checks.map((c, i) => (
+            <In key={c} t={t} at={k2 + 0.4 + i * 0.25} from="scale">
+              <Pill tone="good" size={24}>✓ {c}</Pill>
+            </In>
+          ))}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};

@@ -28,6 +28,13 @@
   "words": 20
  },
  {
+  "id": "k1",
+  "scene": "passport",
+  "text": "First, the owner approves a Kite Passport session with a passkey, and Pawlr checks every payment against it before signing.",
+  "seconds": 8.376,
+  "words": 20
+ },
+ {
   "id": "l1",
   "scene": "live",
   "text": "Here's a real session on Kite testnet. Ticks one and two pass, and each one settles on-chain.",

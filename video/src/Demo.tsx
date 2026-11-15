@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import beatsJson from "../beats.json";
-import { Close, Explorer, Hook, How, Judge, Live, Pitch, Proof, Recover } from "./scenes";
+import { Close, Explorer, Hook, How, Judge, Live, Passport, Pitch, Proof, Recover } from "./scenes";
 import { Beat, C, FPS, Placed, SceneBeats, ease, fontFamily } from "./theme";
 import { useT } from "./ui";
 
@@ -21,6 +21,7 @@ export const place = (): { beats: Placed[]; total: number } => {
 const SCENES: [string, React.FC<{ B: SceneBeats }>][] = [
   ["hook", Hook],
   ["pitch", Pitch],
+  ["passport", Passport],
   ["live", Live],
   ["explorer", Explorer],
   ["how", How],
