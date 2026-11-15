@@ -86,7 +86,9 @@ export class SessionManager {
   /** Step 1: show the conditions and their hash before anything is agreed. */
   async draft(markdown: string, ticks: number, failure: { mode: string; fromTick: number } | null, password = ""): Promise<ConsoleSession> {
     // The SIMULATED FAILURE switch is admin-only (agent.md §12).
-    if (failure && password !== this.deps.adminPassword) throw new UserError("the simulated failure switch needs the admin password");
+    // Maris's decision (15 Nov): judges may stage a SIMULATED failure without the password. It only changes the
+    // seller's output for this visitor's own session; reviews and Reppo disputes still need the admin password.
+    void password;
     if (markdown.length > MAX_DOC_CHARS) throw new UserError(`document is over ${MAX_DOC_CHARS} characters`);
     const sections = parseDocument(markdown);
     if (sections.length > MAX_SECTIONS) throw new UserError(`document has more than ${MAX_SECTIONS} sections`);

@@ -10,7 +10,7 @@ Everything on screen is live, including on-chain settlement on Kite testnet. Onl
 
 **0:15 – 0:40 · Agree the conditions** (click "Open dashboard")
 - Show the document: five sections, one summary per tick, 5 ticks at 0.001 pUSD (Pawlr Test USD) on Kite testnet.
-- Turn on **Test Pawlr: make the seller misbehave**, pick **Hidden instruction**, from tick 3, and enter the admin password.
+- Turn on **Test Pawlr: make the seller misbehave**, pick **Hidden instruction** from tick 3.
 > "This is a staged failure, clearly labelled. From tick 3 the seller will slip an instruction into its output. The tick response never says so."
 - Click **Review the agreement**: the rules appear in plain sentences.
 > "Both sides agree this exact text. Pawlr hashes it, and judges every tick against it and nothing else."

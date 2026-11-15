@@ -108,7 +108,7 @@ Seven scenarios, 5 ticks each, real on-chain testnet payments, failures staged f
 | Recover: SERV drafts the claim, code re-checks, sent to the seller's refund inbox | **Live** | console step 5. Money is not returned automatically |
 | Human review of unclear ticks (approve / reject, admin password) | **Live** (review state reached live through a Reppo `review`; the approve / reject click itself is tested, not yet clicked live) | integration-notes §5 |
 | Kite Passport payments (`kpass session execute`) | **Built, blocked by Kite** | session approved with a passkey; payment refused: `host_not_in_executable_catalog` |
-| Staged failures (junk, off-topic, stale, empty, injection, subtle) | **Simulated failures** (by design) | admin-password switch (also in the dashboard); truth log records what was served |
+| Staged failures (junk, off-topic, stale, empty, injection, subtle) | **Simulated failures** (by design) | seller switch behind the admin password; in the dashboard anyone can stage one on their own session; truth log records what was served |
 | Dolphin screen (demo and economy mode) | **Live** | live session tick 1 decided `dolphin+serv`; benchmark: 18 live screens; fixtures captured from live Dolphin |
 | Reppo disputes from the console | **Live** | eval `cmwflzj3u000008jme38595rk` on a live testnet session; 8 more in the benchmark (integration-notes §5) |
 | Benchmark (code only vs code + SERV, 7 scenarios; Dolphin economy mode; Reppo agreement) | **Live, real runs** | [docs/benchmark.md](docs/benchmark.md) |
