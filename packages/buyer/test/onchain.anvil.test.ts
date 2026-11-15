@@ -1,5 +1,5 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -17,7 +17,8 @@ import { WalletPayer, agreeSession, buildConditions, fetchSellerInfo, loadSpendL
  * settles through the OFFICIAL x402 facilitator code with a gas wallet, the
  * buyer pays with the official x402 client, and balances are read back from
  * the chain. Only the SERV judge is a test double here.
- * Skipped when Foundry's anvil is not installed.
+ * Skipped when Foundry's anvil is not installed or the contract has not been
+ * compiled (`cd contracts && forge build` writes contracts/out/, which git ignores).
  */
 const hasAnvil = spawnSync("anvil", ["--version"], { shell: true }).status === 0;
 const PORT = 8547;
@@ -25,7 +26,9 @@ const RPC = `http://127.0.0.1:${PORT}`;
 // Anvil's well-known public development keys (never used outside a local chain).
 const DEPLOYER_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const GAS_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d";
-const artifact = JSON.parse(readFileSync(new URL("../../../contracts/out/PawlrTestUSD.sol/PawlrTestUSD.json", import.meta.url), "utf8"));
+const ARTIFACT = new URL("../../../contracts/out/PawlrTestUSD.sol/PawlrTestUSD.json", import.meta.url);
+const canRun = hasAnvil && existsSync(ARTIFACT);
+const artifact = canRun ? JSON.parse(readFileSync(ARTIFACT, "utf8")) : null;
 const chain = defineChain({ id: 2368, name: "anvil-kite", nativeCurrency: { name: "KITE", symbol: "KITE", decimals: 18 }, rpcUrls: { default: { http: [RPC] } } });
 const pub = createPublicClient({ chain, transport: http(RPC) });
 
@@ -50,7 +53,7 @@ let anvil: ChildProcess | undefined;
 let token: `0x${string}`;
 const balanceOf = (a: string) => pub.readContract({ address: token, abi: artifact.abi, functionName: "balanceOf", args: [a] }) as Promise<bigint>;
 
-describe.skipIf(!hasAnvil)("on-chain settlement (anvil)", () => {
+describe.skipIf(!canRun)("on-chain settlement (anvil)", () => {
   beforeAll(async () => {
     anvil = spawn("anvil", ["--chain-id", "2368", "--port", String(PORT), "--silent"], { shell: true });
     for (let i = 0; i < 60; i++) {

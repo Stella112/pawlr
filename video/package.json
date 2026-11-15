@@ -1,10 +1,10 @@
 {
-  "name": "allowance-video",
+  "name": "pawlr-video",
   "private": true,
   "version": "1.0.0",
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render src/index.ts Demo out/allowance-demo.mp4 --codec=h264 --crf=18"
+    "render": "remotion render src/index.ts Demo out/pawlr-demo.mp4 --codec=h264 --crf=18"
   },
   "dependencies": {
     "@remotion/cli": "4.0.538",
