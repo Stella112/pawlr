@@ -7,7 +7,9 @@ Pawlr pays a service one tick at a time, checks each delivery against conditions
 - Live seller: **https://pawlr.vercel.app** (Kite testnet, `eip155:2368`)
 - Dashboard: **https://pawlr.vercel.app/dashboard** (run a session, make the seller misbehave, see the receipt, request a refund)
 - Landing page: **https://pawlr.vercel.app** (what Pawlr is, in plain language)
-- Built for the OpenServ SERV Hackathon Edition 02, **Kite track**. Judging: **SERV Reasoning**.
+- Demo video (2:28): _link added at submission_
+- Built for the OpenServ SERV Hackathon Edition 02, **Kite track**, with **SERV Reasoning** (required in every track) as the judge.
+- Tests: `pnpm test` runs **128 tests**, all passing.
 
 Every tick is a **real x402 payment settled on-chain on Kite testnet**, with a transaction you can open on [testnet.kitescan.ai](https://testnet.kitescan.ai). Failures in the demo are staged with the seller's failure switch and labelled as such.
 
@@ -17,15 +19,19 @@ Every tick is a **real x402 payment settled on-chain on Kite testnet**, with a t
 
 ```mermaid
 sequenceDiagram
+    participant O as Owner
+    participant P as Kite Passport
     participant B as Buyer (pawlr CLI / console)
     participant S as Seller (x402 paywall)
     participant F as Facilitator (official x402 code)
     participant K as Kite testnet
     participant V as Verifier (code + SERV)
+    O->>P: 0. Approve a spending session with a passkey (per-payment cap, total cap, expiry, endpoint)
+    P-->>B: Approved limits
     B->>S: 1. Agree Delivery Conditions (both hold the same hash)
     loop each tick, only while the last tick passed
         B->>S: 2. Ask for tick n (no payment) and read the 402 terms
-        Note over B: Check payee, network, token, price against the conditions
+        Note over B: Check payee, network, token, price against the conditions, and the payment against the Passport limits
         B->>S: 3. Pay tick n (signed EIP-3009 authorization)
         S->>F: verify, serve the tick, then settle
         F->>K: transferWithAuthorization (real transaction)
@@ -106,9 +112,9 @@ Seven scenarios, 5 ticks each, real on-chain testnet payments, failures staged f
 | Shadow Agent on unclear rulings | **Live code, not triggered live** | SERV never answered "unsure" in our runs; path tested by replaying real responses. SERV does not expose the Shadow Agent outcome in its API |
 | Buyer loop: payee/amount checks, spend caps, ledger (no double pay), receipt | **Live** | runs above; tests |
 | Console: conditions + hash, live meter, PAUSED / IN REVIEW, receipt download | **Live** | https://pawlr.vercel.app/dashboard |
-| Recover: SERV drafts the claim, code re-checks, sent to the seller's refund inbox | **Live** | console step 5. Money is not returned automatically |
+| Recover: SERV drafts the claim, code re-checks, sent to the seller's refund inbox | **Live** | dashboard step 4. Money is not returned automatically |
 | Human review of unclear ticks (approve / reject, admin password) | **Live** (review state reached live through a Reppo `review`; the approve / reject click itself is tested, not yet clicked live) | integration-notes §5 |
-| Kite Passport spending limits (passkey-approved session, enforced on every payment) | **Live** (testnet sandbox) | session `agent_session_01a1e0fd-6ac8-713a-a5c5-158639049402`; run on 2026-11-15 under it: ticks 1–2 paid (`0x9c8a543e…4e38`, `0xd5371ec0…7da7`), tick 3 caught (`0x1f34ef34…9898`), 0.003 of 0.5 spent |
+| Kite Passport spending limits (passkey-approved session, enforced on every payment) | **Live** (testnet sandbox) | session `agent_session_01a1e0fd-6ac8-713a-a5c5-158639049402`; run on 2026-11-15 under it: [tick 1](https://testnet.kitescan.ai/tx/0x9c8a543e0ee379d715c7b818311a2c4ad959e1d805f43a41bb4b01b7f5954e38) and [tick 2](https://testnet.kitescan.ai/tx/0xd5371ec0d844b9e92b93814be5f696b6545a70f452f32403706d22808b347da7) paid, [tick 3](https://testnet.kitescan.ai/tx/0x1f34ef34bbc6cc03b947a2ee8c6444e1ad56b9c1722c2b68b445f58c52ba9898) caught, 0.003 of 0.5 spent |
 | Kite Passport executing payments (`kpass session execute`) | **Built, blocked by Kite** | payment refused: `host_not_in_executable_catalog` (seller not in Kite's catalog) |
 | Staged failures (junk, off-topic, stale, empty, injection, subtle) | **Simulated failures** (by design) | seller switch behind the admin password; in the dashboard anyone can stage one on their own session; truth log records what was served |
 | Dolphin screen (demo and economy mode) | **Live** | live session tick 1 decided `dolphin+serv`; benchmark: 18 live screens; fixtures captured from live Dolphin |
@@ -127,6 +133,8 @@ node --env-file=.env packages/buyer/dist/cli.js run --doc docs/demo-document.md 
 ```
 
 Add `--simulate-failure injection@3` (needs the seller's `ADMIN_PASSWORD`) to stage a failure. With `DOLPHIN_API_KEY` set, Dolphin screens each tick; add `--mode economy` to let a clean Dolphin pass settle a tick. Reppo disputes run from the console when `REPPO_API_KEY` is set. The buyer wallet needs pUSD; `scripts/deploy-token.mjs` deploys the token and mints test funds (the deployer is the token owner). Environment variables are listed in `.env.example`. Never commit `.env`.
+
+To approve a new Kite Passport session for the dashboard (on a machine where `kpass` is logged in, sandbox on): `node scripts/passport-request.mjs`. It prints Kite's approval link, waits for the passkey approval and saves the approved session to `data/passport/`.
 
 ## SDK
 
@@ -154,7 +162,7 @@ The demo seller is built on the same packages anyone can use:
 
 - Pay-then-verify: one bad tick is always paid before it is caught.
 - The payment token is Pawlr's own testnet token, settled by Pawlr's own facilitator, not pieUSD via the hosted Pieverse facilitator. Switching back is configuration (`SETTLEMENT_MODE=facilitator`, no `SETTLEMENT_ASSET`).
-- Kite Passport approves the limits but cannot execute payments to this host (Kite's catalog allowlist), so Pawlr enforces the approved limits itself and pays over x402 from the buyer wallet; Passport cannot pin a session to one payee (no such field), so Pawlr checks the payee itself.
+- Kite Passport approves the limits but cannot execute payments to this host (Kite's catalog allowlist), so Pawlr enforces the approved limits itself and pays over x402 from the buyer wallet. Kite records the session's endpoint scope but does not enforce it on paid calls today, so Pawlr checks the endpoint and the payee itself.
 - Refunds are requested, never automatic.
 - PromptGuard is one layer, not a guarantee; it missed injections in our runs.
 - Reppo judges the delivered text only, so it cannot see code facts such as a stale timestamp; Pawlr keeps the code checks first. Reppo submissions appear on Reppo's public feed, so only send material that may be public. docs.reppo.ai still documents a removed endpoint; Pawlr follows eval.reppo.xyz/agents.md.
