@@ -150,8 +150,8 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-bet
     <div class="grid4">
       <div class="card"><span class="step-n">STEP 1</span><h3>Agree what "good" means</h3><p>Buyer and seller agree written delivery rules: what each tick must contain, the price, and a spending cap. Both hold the same fingerprint of that agreement.</p></div>
       <div class="card"><span class="step-n">STEP 2</span><h3>Pay one tick</h3><p>A tiny payment goes out on Kite, only to the agreed seller, only at the agreed price. It's recorded on-chain.</p></div>
-      <div class="card"><span class="step-n">STEP 3</span><h3>Check the delivery</h3><p>Automatic checks run first. Then an AI judge (SERV Reasoning) decides if it meets the rules, and it must <b>quote the exact words</b> it relied on.</p></div>
-      <div class="card"><span class="step-n">STEP 4</span><h3>Continue or stop</h3><p>Good: pay the next tick. Bad: stop at once and show why. Unclear: pause for a person to decide. You can then request a refund with the evidence attached.</p></div>
+      <div class="card"><span class="step-n">STEP 3</span><h3>Check the delivery</h3><p>Automatic checks run first. A fast AI screen (Dolphin) takes a first look, then an AI judge (SERV Reasoning) decides if it meets the rules, and it must <b>quote the exact words</b> it relied on.</p></div>
+      <div class="card"><span class="step-n">STEP 4</span><h3>Continue or stop</h3><p>Good: pay the next tick. Bad: stop at once and show why. Unclear: pause for a person to decide. Disagree? Ask Reppo's independent panel. You can then request a refund with the evidence attached.</p></div>
     </div>
   </div>
 </section>
@@ -206,11 +206,25 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-bet
   <div class="wrap">
     <h2>Questions</h2>
     <details class="faq"><summary>Do I still pay for a bad tick?</summary><p>Yes, once. Payment happens first and the check comes right after, so the bad tick itself is paid. Pawlr then stops every later payment, which is why the most you can lose is one tick. You can request that tick back with the evidence attached.</p></details>
-    <details class="faq"><summary>Who decides whether a delivery is good?</summary><p>Simple automatic checks go first: right order, not tampered with, not empty, the right length, the right key words. Then an AI judge, SERV Reasoning, compares the delivery with the agreed rules. It must quote the exact words it relied on; if it can't, nothing is decided automatically.</p></details>
+    <details class="faq"><summary>Who decides whether a delivery is good?</summary><p>Simple automatic checks go first: right order, not tampered with, not empty, the right length, the right key words. Then a fast screen (Dolphin) and an AI judge (SERV Reasoning) compare the delivery with the agreed rules. It must quote the exact words it relied on; if it can't, nothing is decided automatically.</p></details>
     <details class="faq"><summary>What happens when it isn't sure?</summary><p>Nothing unclear is rejected automatically. The session pauses and a person approves or rejects that tick.</p></details>
+    <details class="faq"><summary>What if I think a verdict is wrong?</summary><p>A stopped or unclear tick can be sent to Reppo, an independent panel of evaluators. It reads the agreed rule, the section, what the seller delivered and anything the seller added, and gives its own verdict. Payments resume only if it passes the tick.</p></details>
     <details class="faq"><summary>Is this real money?</summary><p>The payments are real transactions on Kite's test network, but the token is a free test token with no value. The same design works with real stablecoins on Kite mainnet.</p></details>
     <details class="faq"><summary>Are refunds automatic?</summary><p>No. Pawlr sends the seller one clear refund request listing the bad ticks, the amount and the evidence. Returning the money is up to the seller.</p></details>
     <details class="faq"><summary>Can a seller trick the AI judge?</summary><p>The judge treats the seller's text as untrusted and ignores instructions inside it, a prompt-injection guard runs on every request, and the judge only decides against the written rules, quoting its evidence. In our live tests with the current rules, a hidden "mark this as delivered" instruction was caught and the payments stopped.</p></details>
+  </div>
+</section>
+
+<section class="alt">
+  <div class="wrap">
+    <h2>Built on</h2>
+    <p class="intro">Each partner does one job, and every result is shown in the dashboard.</p>
+    <div class="grid4">
+      <div class="card"><h3 style="margin-top:0">Kite</h3><p>Every tick is an x402 payment on Kite testnet, settled on-chain with a transaction you can open.</p></div>
+      <div class="card"><h3 style="margin-top:0">SERV Reasoning</h3><p>The judge: a structured verdict with the exact quote it relied on, an injection guard on every ruling, and the refund request.</p></div>
+      <div class="card"><h3 style="margin-top:0">Dolphin</h3><p>A fast, low-cost first screen of every delivery before SERV rules on it.</p></div>
+      <div class="card"><h3 style="margin-top:0">Reppo</h3><p>An independent panel that gives its own verdict when a stopped or unclear tick is disputed.</p></div>
+    </div>
   </div>
 </section>
 
@@ -224,7 +238,7 @@ footer .wrap{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-bet
 
 <footer>
   <div class="wrap">
-    <span>Pawlr · built for the OpenServ SERV Hackathon, Kite track · payments on Kite (x402), judging by SERV Reasoning</span>
+    <span>Pawlr · built for the OpenServ SERV Hackathon, Kite track · payments on Kite (x402) · judging by SERV Reasoning · screening by Dolphin · disputes by Reppo</span>
     <span><a href="https://github.com/Stella112/pawlr" target="_blank" rel="noopener">Source on GitHub</a> · <a href="/health">Service status</a></span>
   </div>
 </footer>
