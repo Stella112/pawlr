@@ -10,11 +10,13 @@ import {
   parseDocument,
   runTicks,
   sendClaim,
+  PassportLimitedPayer,
   type Payer,
   type Section,
   type SellerInfo,
   type SpendLimits,
 } from "@pawlr/buyer";
+import type { ConsolePassport, PassportView } from "./passport.js";
 
 export type Status = "draft" | "running" | "paused" | "review" | "disputing" | "done" | "stopped" | "error";
 
@@ -40,6 +42,8 @@ export interface ConsoleSession {
   refund?: { requestId: string; receivedAt: string; note: string; amountOwed: string; ticks: number[] };
   /** Reppo disputes, by tick: the eval id and the mapped outcome. */
   disputes?: Record<number, { state: "waiting" | "done"; evalId?: string | null; route?: string | null; score?: number | null; verdict?: string; reason?: string }>;
+  /** The Kite Passport session this run was checked against (null: none was active). */
+  passport?: PassportView | null;
   error?: string;
 }
 
@@ -57,6 +61,8 @@ export interface ManagerDeps {
   /** Reppo Eval Router client; disputes are offered only when it is configured. */
   reppo?: ReppoClient;
   onCost?: (c: CostEntry) => void;
+  /** Kite Passport limits applied to every payment, when an approved session is active. */
+  passport?: ConsolePassport;
 }
 
 export const FAILURE_MODES = ["junk", "off-topic", "stale", "empty", "injection", "subtle"];
@@ -147,9 +153,18 @@ export class SessionManager {
     s.status = "running";
     try {
       const seller = await this.sellerInfo();
+      let payer = this.deps.payer(s.conditions);
+      const guard = this.deps.passport?.activeGuard() ?? null;
+      s.passport = guard ? this.deps.passport!.view() : null;
+      if (guard) {
+        payer = new PassportLimitedPayer(payer, guard, s.conditions.pricePerTick);
+        s.log.push(`Kite Passport session ${guard.session.sessionId} (approved by the owner with a passkey): every payment must fit up to ${guard.session.maxPerTx} per tick, ${guard.session.maxTotal ?? "no"} total, until ${guard.session.expiresAt}`);
+      } else if (this.deps.passport) {
+        s.log.push("No active Kite Passport session: only Pawlr's own spend caps apply to this run");
+      }
       const res = await runTicks(
         { seller, conditions: s.conditions, conditionsHash: s.conditionsHash, sections: s.sections, limits: this.deps.limits },
-        { payer: this.deps.payer(s.conditions), verifier: { ...this.deps.verifier, serv: this.deps.serv }, fetch: this.f(), dataDir: this.deps.dataDir },
+        { payer, verifier: { ...this.deps.verifier, serv: this.deps.serv }, fetch: this.f(), dataDir: this.deps.dataDir },
         {
           log: (l) => s.log.push(l),
           onTick: (v: TickVerdict, ev?: TickEvidence) => {

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { Hono } from "hono";
 import type { ConsoleSession } from "./sessions.js";
 import { FAILURE_MODES, MAX_TICKS, SessionManager, UserError } from "./sessions.js";
+import type { ConsolePassport } from "./passport.js";
 
 const PAGE = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
 const DEMO_DOC = readFileSync(new URL("../public/demo-document.md", import.meta.url), "utf8");
@@ -30,12 +31,13 @@ function view(s: ConsoleSession) {
     stoppedBecause: s.stoppedBecause ?? null,
     refund: s.refund ?? null,
     disputes: s.disputes ?? {},
+    passport: s.passport ?? null,
     error: s.error ?? null,
   };
 }
 
 /** Console API under /console (served at https://pawlr.vercel.app/console). */
-export function createConsoleApp(mgr: SessionManager, info: ConsoleInfo) {
+export function createConsoleApp(mgr: SessionManager, info: ConsoleInfo, passport?: ConsolePassport, adminPassword = "") {
   const app = new Hono().basePath("/console");
 
   app.onError((err, c) => {
@@ -75,6 +77,21 @@ export function createConsoleApp(mgr: SessionManager, info: ConsoleInfo) {
   app.post("/api/sessions/:id/claim/send", async (c) => {
     const b = await c.req.json<{ claim: any }>();
     return c.json(await mgr.sendClaim(c.req.param("id"), b.claim));
+  });
+  // Kite Passport: anyone can see the owner's approved session; only the owner can request a new one.
+  app.get("/api/passport", (c) => c.json(passport ? passport.view() : { state: "none" }));
+  app.post("/api/passport/request", async (c) => {
+    if (!passport) throw new UserError("Kite Passport is not configured on this server");
+    const b = await c.req.json<{ password?: string }>();
+    if (!adminPassword || String(b.password ?? "") !== adminPassword) throw new UserError("wrong admin password");
+    return c.json(await passport.request());
+  });
+  app.post("/api/passport/refresh", async (c) => {
+    if (!passport) throw new UserError("Kite Passport is not configured on this server");
+    const b = await c.req.json<{ password?: string }>().catch(() => ({}) as { password?: string });
+    const v = await passport.refresh();
+    const owner = adminPassword && String(b.password ?? "") === adminPassword;
+    return c.json({ ...v, approvalUrl: owner ? passport.approvalUrl() : null });
   });
   return app;
 }

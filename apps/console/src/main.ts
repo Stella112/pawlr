@@ -2,10 +2,11 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { serve } from "@hono/node-server";
-import { KpassPayer, WalletPayer, loadSpendLimits } from "@pawlr/buyer";
+import { KpassPayer, PassportClient, WalletPayer, loadSpendLimits } from "@pawlr/buyer";
 import { dolphinScreen, dolphinTransport, reppoClient, servTransport, type CostEntry } from "@pawlr/verifier";
 import { createConsoleApp } from "./app.js";
 import { SessionManager } from "./sessions.js";
+import { ConsolePassport } from "./passport.js";
 
 const env = (k: string, d = "") => (process.env[k] ?? "").trim() || d;
 const sellerUrl = env("SELLER_URL", "https://pawlr.vercel.app");
@@ -27,6 +28,20 @@ const screen = env("DOLPHIN_API_KEY")
 const reppo = env("REPPO_API_KEY") ? reppoClient(env("REPPO_API_KEY"), env("REPPO_BASE_URL", "https://eval.reppo.xyz/api/v1")) : undefined;
 const mode = env("PAWLR_VERIFY_MODE", "demo") === "economy" ? "economy" : "demo";
 
+// Kite Passport (on unless PASSPORT=off): the owner approves a spending session with a passkey and every run is held to it.
+const passport =
+  env("PASSPORT", "on") === "off"
+    ? undefined
+    : new ConsolePassport(new PassportClient({ bin: env("KPASS_BIN") || undefined }), join(dataDir, "passport"), {
+        host: new URL(sellerUrl).host,
+        pathPrefix: "/tick/",
+        maxPerTx: env("PASSPORT_MAX_PER_TX", "0.001"),
+        maxTotal: env("PASSPORT_MAX_TOTAL", "0.5"),
+        ttlSeconds: Number(env("PASSPORT_TTL_SECONDS", String(7 * 24 * 3600))),
+      });
+// While a request is waiting for the owner's passkey, ask Kite every 15 s whether it was approved.
+if (passport) setInterval(() => void passport.refresh().catch((e) => console.error("passport refresh:", e.message)), 15_000).unref();
+
 const mgr = new SessionManager({
   sellerUrl,
   dataDir,
@@ -39,6 +54,7 @@ const mgr = new SessionManager({
   limits,
   adminPassword,
   maxStartsPerHour: Number(env("CONSOLE_MAX_STARTS_PER_HOUR", "30")),
+  passport,
 });
 
 await mgr.sellerInfo();
@@ -52,6 +68,6 @@ const app = createConsoleApp(mgr, {
   explorer: "https://testnet.kitescan.ai/tx/",
   reppo: Boolean(reppo),
   dolphin: screen ? `${dolphinModel} (${mode} mode)` : null,
-});
+}, passport, adminPassword);
 const port = Number(env("CONSOLE_PORT", "8820"));
 serve({ fetch: app.fetch, port, hostname: env("CONSOLE_HOST", "127.0.0.1") }, (i) => console.log(`pawlr-console on :${i.port}/console (seller ${sellerUrl}, payer ${payerKind}, dolphin ${screen ? mode : "off"}, reppo ${reppo ? "on" : "off"})`));

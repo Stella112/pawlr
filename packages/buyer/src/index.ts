@@ -5,3 +5,4 @@ export * from "./payer.js";
 export * from "./run.js";
 export * from "./walletPayer.js";
 export * from "./recover.js";
+export * from "./passport.js";

@@ -62,6 +62,14 @@ select{font:inherit;color:inherit;background:var(--soft);border:1px solid var(--
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px}
 .err{color:var(--bad);font-size:14px}
+.pp{border-radius:22px;padding:18px 20px;margin:16px 0 4px;background:var(--soft)}
+.pp-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pp-h b{font-size:15.5px}
+.pp .pill{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px}
+.pp .on{background:var(--ok-bg);color:var(--ok)}.pp .off{background:var(--warn-bg);color:var(--warn)}
+.pp dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:12px 0 0;font-size:14px}
+.pp dt{color:var(--muted)}.pp dd{margin:0;word-break:break-all}
+.pp details{margin-top:12px}.pp summary{cursor:pointer;font-size:14px;color:var(--muted)}
 .rules{list-style:none;padding:0;margin:0}
 .rules li{display:flex;gap:14px;padding:13px 0;border-top:1px solid var(--line);font-size:15.5px}
 .rules li:first-child{border-top:0}
@@ -160,6 +168,16 @@ input[type=password]{font:inherit;color:inherit;background:#fff;border:1px solid
     <div class="step-h"><span class="num">2</span><h2>Agree the rules</h2><span class="hint">Both sides sign off on this</span></div>
     <div id="rulesBox" class="hidden">
       <ul class="rules" id="rules"></ul>
+      <div class="pp" id="ppBox">
+        <div class="pp-h"><b>Kite Passport</b><span class="pill off" id="ppPill">checking…</span></div>
+        <p class="help" id="ppText" style="margin:8px 0 0"></p>
+        <dl id="ppDl" class="hidden"></dl>
+        <details id="ppOwner"><summary>Owner: approve a new Passport session</summary>
+          <p class="help" style="margin-top:8px">Creates a Kite Passport spending session (per-tick cap, total cap, expiry, only Pawlr's seller). Kite sends back a link; the owner approves it with their passkey.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input type="password" id="ppPw" placeholder="Admin password" autocomplete="off"><button class="btn sec" id="ppBtn">Request approval</button><span class="err" id="ppErr"></span></div>
+          <p class="help hidden" id="ppLink" style="margin-top:10px"></p>
+        </details>
+      </div>
       <details class="tech"><summary>Show the exact agreement and its fingerprint</summary>
         <p class="help" style="margin-top:8px">Fingerprint (SHA-256): <span class="mono" id="condHash"></span></p>
         <pre id="condJson"></pre>
@@ -297,7 +315,7 @@ $("draftBtn").onclick = async () => {
     $("rules").innerHTML = rules.map(([i, t]) => `<li><span class="ico">${i}</span><span>${t}</span></li>`).join("");
     $("condHash").textContent = draft.conditionsHash;
     $("condJson").textContent = JSON.stringify(c, null, 2);
-    $("s2").classList.remove("locked"); $("rulesBox").classList.remove("hidden");
+    $("s2").classList.remove("locked"); $("rulesBox").classList.remove("hidden"); loadPassport();
     $("s1").classList.add("done");
     $("s2").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (e) { $("draftErr").textContent = e.message; }
@@ -451,6 +469,40 @@ $("sendBtn").onclick = async () => {
 };
 
 init().catch((e) => { document.querySelector("main").insertAdjacentHTML("afterbegin", `<div class="statuscard st-bad"><div class="si">!</div><div><h3>The dashboard could not load</h3><p>${esc(e.message)}</p></div></div>`); });
+
+// ── Kite Passport ──
+let ppPoll = null;
+function renderPassport(v) {
+  const on = v.state === "active";
+  $("ppPill").className = "pill " + (on ? "on" : "off");
+  $("ppPill").textContent = { active: "approved with a passkey", pending: "waiting for the owner's passkey", expired: "expired", rejected: "rejected", none: "no session" }[v.state] || v.state;
+  $("ppText").textContent = on
+    ? "The owner approved these spending limits in Kite Passport. Pawlr checks every payment against them before signing, and stops if a payment would break one."
+    : "No approved Passport session right now, so only Pawlr's own spend caps apply to new runs.";
+  if (v.sessionId) {
+    $("ppDl").classList.remove("hidden");
+    const rows = [["Session", v.sessionId], ["Per payment", `up to ${v.maxPerTx} ${v.currency || ""}`], ["Total", v.maxTotal ? `${v.maxTotal} ${v.currency || ""} (spent through Pawlr: ${v.spentViaPawlr ?? "0"})` : "no total cap"], ["Only pays", v.allowedEndpoint || "any"], ["Expires", v.expiresAt ? new Date(v.expiresAt).toLocaleString() : "?"]];
+    $("ppDl").innerHTML = rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("");
+  }
+}
+async function loadPassport() { try { renderPassport(await api("/passport")); } catch {} }
+$("ppBtn").onclick = async () => {
+  $("ppErr").textContent = "";
+  try {
+    const r = await api("/passport/request", { password: $("ppPw").value });
+    $("ppLink").classList.remove("hidden");
+    $("ppLink").innerHTML = `Open <a href="${esc(r.approvalUrl)}" target="_blank" rel="noopener">Kite's approval page</a> and approve with your passkey. This page updates once Kite confirms.`;
+    clearInterval(ppPoll);
+    ppPoll = setInterval(async () => {
+      try {
+        const v = await api("/passport/refresh", { password: $("ppPw").value });
+        renderPassport(v);
+        if (v.state === "active") { clearInterval(ppPoll); $("ppLink").textContent = "Approved. New runs are held to these limits."; }
+      } catch {}
+    }, 4000);
+  } catch (e) { $("ppErr").textContent = e.message; }
+};
+loadPassport();
 </script>
 </body>
 </html>
