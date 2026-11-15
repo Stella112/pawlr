@@ -16,7 +16,7 @@ Everything on screen is live, including on-chain settlement on Kite testnet. Onl
 > "Both sides agree this exact text. Pawlr hashes it, and judges every tick against it and nothing else."
 
 **0:40 – 0:55 · Payment** (the Agree the rules step)
-> "Each tick is a real x402 payment on Kite testnet: the buyer signs an authorization for the exact price, and the official x402 facilitator code settles it on-chain. Every tick links to its transaction on Kite's explorer. The token is our own testnet stand-in, Pawlr Test USD, because Kite's test token isn't publicly available. Kite Passport is wired in too, but Passport only pays hosts in Kite's catalog."
+> "Each tick is a real x402 payment on Kite testnet: the buyer signs an authorization for the exact price, and the official x402 facilitator code settles it on-chain. Every tick links to its transaction on Kite's explorer. The token is our own testnet stand-in, Pawlr Test USD, because Kite's test token isn't publicly available. A person authorises the agent first: the owner approved a Kite Passport session with a passkey, 0.001 per payment and 0.5 in total, and Pawlr checks every payment against it before signing. Passport itself only pays hosts in Kite's catalog, so the tick is paid over x402 inside those limits."
 
 **0:55 – 1:40 · Honest ticks** (click **Agree and start**, scroll to the Live meter)
 - Ticks 1 and 2 turn green. Click one transaction link to show it on testnet.kitescan.ai.
