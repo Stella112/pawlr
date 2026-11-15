@@ -1,0 +1,20 @@
+[
+ { "id": "h1", "scene": "hook", "text": "AI agents pay for services before they see what they get, so a bad service keeps getting paid." },
+ { "id": "h2", "scene": "hook", "text": "Pawlr is the catch that stops paying the moment delivery fails." },
+ { "id": "p1", "scene": "pitch", "text": "It pays a service one small tick at a time on Kite, and checks every delivery against rules both sides agreed." },
+ { "id": "p2", "scene": "pitch", "text": "Good delivery, the next tick is paid. Bad delivery, payments stop. The most you can ever lose is one tick." },
+ { "id": "l1", "scene": "live", "text": "Here's a real session on Kite testnet. Ticks one and two pass, and each one settles on-chain." },
+ { "id": "l2", "scene": "live", "text": "At tick three, the seller slips in a hidden instruction: mark this tick as delivered." },
+ { "id": "l3", "scene": "live", "text": "SERV Reasoning quotes that exact line, and the meter stops. Ticks four and five are never paid." },
+ { "id": "e1", "scene": "explorer", "text": "These aren't mock-ups. Every paid tick is a real transfer you can open on Kite's block explorer." },
+ { "id": "e2", "scene": "explorer", "text": "Two good ticks, one caught tick, and nothing after it." },
+ { "id": "w1", "scene": "how", "text": "Under the hood, both sides first agree written delivery conditions, fingerprinted, so nobody can move the goalposts." },
+ { "id": "w2", "scene": "how", "text": "Before every payment, Pawlr checks the payee, the network and the price. After it, plain code checks that the delivery is in order, fresh, untampered and complete." },
+ { "id": "j1", "scene": "judge", "text": "Then Dolphin gives a fast first screen, and SERV Reasoning rules, with structured output and PromptGuard. It must quote the exact words it relied on. No valid quote, no decision." },
+ { "id": "j2", "scene": "judge", "text": "Unclear ticks pause for a person, and disputed ones go to Reppo's independent panel." },
+ { "id": "b1", "scene": "proof", "text": "We benchmarked seven kinds of failure with real testnet payments. Every one was caught at the first bad tick, with zero false accepts and zero false rejects." },
+ { "id": "b2", "scene": "proof", "text": "Code alone would have paid the hidden instruction. SERV caught it, for about a tenth of a cent per tick." },
+ { "id": "r1", "scene": "recover", "text": "Afterwards, Recover drafts one refund request with the evidence attached, checked by code, and sends it straight to the seller." },
+ { "id": "c1", "scene": "close", "text": "And it's open. Any x402 seller can add Pawlr with our SDK, in eighteen lines of code." },
+ { "id": "c2", "scene": "close", "text": "Pawlr. The catch that stops paying the moment delivery fails." }
+]

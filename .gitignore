@@ -16,3 +16,9 @@ data/
 
 .DS_Store
 Thumbs.db
+
+# demo video build outputs
+video/node_modules/
+video/out/
+video/public/audio/
+video/public/shots/
